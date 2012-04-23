@@ -4,7 +4,7 @@ import ase.interfaces.InterruptibleModule;
 
 public class ADCPin {
 
-	private volatile float voltage = 100f;
+	private volatile float voltage = 0f;
 	private int pinNumber;
 	
 	InterruptibleModule module;

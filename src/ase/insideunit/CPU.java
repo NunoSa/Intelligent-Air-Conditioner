@@ -1,5 +1,7 @@
 package ase.insideunit;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import javax.swing.JLabel;
 
@@ -123,6 +125,11 @@ public class CPU extends Thread implements InterruptibleModule {
 						if(irTemp < 99){
 							irTemp++;
 							lblRemoteTemp.setText("Temp: "+irTemp);
+							
+							// temp = -speed + 45 <=> speed = 45 - temp
+							int speed = 45 - irTemp;
+							uart.shiftReg = (char) speed;
+							uart.busy = true;
 						}
 						break;
 					case 17:
@@ -130,6 +137,11 @@ public class CPU extends Thread implements InterruptibleModule {
 						if(irTemp > -5){
 							irTemp--;
 							lblRemoteTemp.setText("Temp: "+irTemp);
+							
+							// temp = -speed + 45 <=> speed = 45 - temp
+							int speed = 45 - irTemp;
+							uart.shiftReg = (char) speed;
+							uart.busy = true;
 						}
 						break;
 				}
@@ -138,12 +150,10 @@ public class CPU extends Thread implements InterruptibleModule {
 			// Temperature Changed
 			if(tempChanged){
 				tempChanged = false;
+				
+				// Convert voltage into temperature value
 				envTemp = (int) (tempSensorPin.readVoltage() * 100f - 50f);
 				setDisplayNumber(envTemp);
-				
-				// TODO test
-				uart.shiftReg = (char) envTemp;
-				uart.busy = true;
 			}
 			
 		}

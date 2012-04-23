@@ -2,6 +2,8 @@ package ase.outsideunit;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
+import javax.swing.JLabel;
+
 import ase.interfaces.InterruptibleModule;
 import ase.utils.ADCPin;
 import ase.utils.Pin;
@@ -18,7 +20,20 @@ public class MCU extends Thread implements InterruptibleModule{
 	public static final int TXDPIN = 1;
 	private Pin TXD;
 	
+	private ADCPin compressorPin;
+	
 	private UART uart = new UART();
+	private static final int UART_INTERRUPT = 2;
+	
+	/* DEBUG */
+	private JLabel lblFrame;
+	
+	/* Flags */
+	private volatile boolean byteReceived= false;
+	
+	public MCU(JLabel frame){
+		this.lblFrame = frame;
+	}
 	
 	@Override
 	public void interruptModule(int id) {
@@ -30,13 +45,37 @@ public class MCU extends Thread implements InterruptibleModule{
 		super.interrupt();
 	}
 	
-	public void configurePins(Pin txd, Pin rxd){
+	public void configurePins(Pin txd, Pin rxd, ADCPin compressor){
 		this.TXD = txd;
 		this.RXD = rxd;
+		this.compressorPin = compressor;
 	}
 	
 	public void run(){
 		uart.start();
+		intHandler.start();
+		
+		while(true){
+			
+			try {
+				sleep(100);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+			if(byteReceived){
+				byteReceived = false;
+				char bytee = uart.shiftReg;
+				
+				//Debug
+				System.out.println((int) bytee);
+				
+				float voltage = bytee / 100f;
+				compressorPin.sendVoltage(voltage, true);
+			}
+			
+		}
 	}
 	
 	private class InterruptHandler extends Thread{
@@ -46,6 +85,28 @@ public class MCU extends Thread implements InterruptibleModule{
 		public InterruptHandler(MCU mcu){
 			this.mcu = mcu;
 			setDaemon(true);
+		}
+		
+		public void run(){
+			
+			int interrupt = 0;
+			while(true){
+				try {
+					interrupt = interrupts.take();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				mcu.suspend();
+				
+				switch(interrupt){
+					case UART_INTERRUPT:
+						byteReceived = true;
+						break;
+				}
+				mcu.resume();
+			}
 		}
 	}
 	
@@ -70,9 +131,13 @@ public class MCU extends Thread implements InterruptibleModule{
 		
 		public void run(){
 			
+			boolean first = true;
+			
 			while(true){
 				
 				while(RXD.readSignal()) delay();
+				
+				String frame = "0";
 				
 				// Start bit Received
 				delay();
@@ -83,18 +148,27 @@ public class MCU extends Thread implements InterruptibleModule{
 					if(RXD.readSignal()){
 						// Bit 1
 						bit += base;
-					}
-					// Otherwise bit 0 (do nothing)
+						frame = frame.concat("1");
+					}else
+						frame = frame.concat("0");
+					
 					delay();
 				}
 				
 				// Stop bit
-				if(!RXD.readSignal()) System.out.println("Stop bit error");
-				else{
-					shiftReg = bit;
-					System.out.println((int) bit);
-					// TODO interrupt cpu
+				if(!RXD.readSignal()){
+					System.err.println("Stop bit error");
+					frame = frame.concat("0");
+				}else{
+					if(!first){
+						shiftReg = bit;
+						interruptModule(UART_INTERRUPT);
+					}else 
+						first = false;
+					frame = frame.concat("1");
 				}
+				lblFrame.setText("Recv: "+frame);
+				delay();
 			}
 		}
 	}

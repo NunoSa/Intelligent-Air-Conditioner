@@ -5,6 +5,7 @@ import java.awt.EventQueue;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 
+import ase.utils.ADCPin;
 import ase.utils.MAX485;
 import ase.utils.Pin;
 
@@ -14,13 +15,15 @@ public class Outside {
 	private JLabel lblFrame = new JLabel("Recv: ");
 	private JLabel lblSpeed = new JLabel("Speed: ");
 	
-	private MCU mcu = new MCU();
+	private MCU mcu = new MCU(lblFrame);
 	
 	/* Pins */
 	private Pin RXDPin = new Pin(mcu, MCU.RXDPIN);
 	private Pin TXDPin = new Pin(mcu, MCU.TXDPIN);
+	private ADCPin Compressor_MCU_Pin = new ADCPin(mcu, -1);
 	
 	/* Modules */
+	private Compressor compressor = new Compressor(Compressor_MCU_Pin, lblSpeed);
 	private MAX485 max485 = new MAX485(TXDPin, RXDPin, MAX485.SLAVEMODE);
 
 	/**
@@ -44,9 +47,10 @@ public class Outside {
 	 */
 	public Outside() {
 		initialize();
-		mcu.configurePins(TXDPin, RXDPin);
+		mcu.configurePins(TXDPin, RXDPin, Compressor_MCU_Pin);
 		mcu.start();
 		max485.start();
+		compressor.start();
 	}
 
 	/**

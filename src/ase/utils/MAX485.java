@@ -164,7 +164,7 @@ public class MAX485 {
 				}else if(a == '0' && b == '1'){
 					// Bit 1
 					RO.sendSignal(Pin.HIGH, false); //System.out.println("1");
-				}
+				}else continue;
 				
 				try {
 					sleep(BITDELAY);
