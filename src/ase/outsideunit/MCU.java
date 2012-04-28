@@ -1,5 +1,13 @@
 package ase.outsideunit;
 
+/**
+ * 
+ * AT90PWM216
+ * http://www.atmel.com/devices/AT90PWM216.aspx
+ * $2.59
+ * 
+ */
+
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.JLabel;

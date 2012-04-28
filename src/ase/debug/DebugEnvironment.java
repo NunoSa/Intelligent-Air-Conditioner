@@ -11,14 +11,20 @@ import java.awt.event.InputMethodListener;
 import java.awt.event.InputMethodEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 
 public class DebugEnvironment {
 
 	private JFrame frame;
-	private JTextField textTemperature;
+	private JTextField textRoomTemp;
 	private boolean movement = false;
+	private JTextField textAmbTemp;
+	private RandomAccessFile f;
+	private volatile int ambTemp = 20;
+	private TempUpdater tUpdater = new TempUpdater();
 
 	/**
 	 * Launch the application.
@@ -40,7 +46,14 @@ public class DebugEnvironment {
 	 * Create the application.
 	 */
 	public DebugEnvironment() {
+		try {
+			f = new RandomAccessFile("TEMP", "rwd");
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		initialize();
+		tUpdater.start();
 	}
 
 	/**
@@ -48,18 +61,18 @@ public class DebugEnvironment {
 	 */
 	private void initialize() {
 		frame = new JFrame();
-		frame.setBounds(100, 100, 234, 162);
+		frame.setBounds(100, 100, 321, 138);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.getContentPane().setLayout(null);
 		
-		JLabel lblTemperature = new JLabel("Temperature:");
+		JLabel lblTemperature = new JLabel("Room Temp:");
 		lblTemperature.setBounds(6, 20, 91, 16);
 		frame.getContentPane().add(lblTemperature);
 		
-		textTemperature = new JTextField();
-		textTemperature.setBounds(93, 14, 61, 28);
-		frame.getContentPane().add(textTemperature);
-		textTemperature.setColumns(10);
+		textRoomTemp = new JTextField();
+		textRoomTemp.setBounds(93, 14, 61, 28);
+		frame.getContentPane().add(textRoomTemp);
+		textRoomTemp.setColumns(10);
 		
 		final JButton btnMovement = new JButton("Start");
 		btnMovement.addActionListener(new ActionListener() {
@@ -85,19 +98,19 @@ public class DebugEnvironment {
 				}
 			}
 		});
-		btnMovement.setBounds(81, 85, 117, 29);
+		btnMovement.setBounds(81, 83, 117, 29);
 		frame.getContentPane().add(btnMovement);
 		
 		JLabel lblMovement = new JLabel("Movement:");
-		lblMovement.setBounds(6, 90, 91, 16);
+		lblMovement.setBounds(6, 88, 91, 16);
 		frame.getContentPane().add(lblMovement);
 		
-		JButton btnRefresh = new JButton("Refresh");
-		btnRefresh.addActionListener(new ActionListener() {
+		JButton btnRefreshRT = new JButton("Refresh");
+		btnRefreshRT.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				int temp;
 				try{
-					temp = Integer.valueOf(textTemperature.getText());
+					temp = Integer.valueOf(textRoomTemp.getText());
 				}catch(NumberFormatException e){
 					JOptionPane.showMessageDialog(frame, "Wrong number", "Temperature", JOptionPane.ERROR_MESSAGE);
 					return;
@@ -108,22 +121,92 @@ public class DebugEnvironment {
 					return;
 				}
 				
-				FileWriter out;
-				try {
-					out = new FileWriter("TEMP");
-					out.write(temp);
-					out.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+				synchronized(f){
+					try {
+						f.writeFloat(temp);
+						f.seek(0);
+					} catch (IOException e) {
+						System.err.println("Can not update room temperature!");
+					}
 				}
 			}
 		});
-		btnRefresh.setBounds(81, 48, 117, 29);
-		frame.getContentPane().add(btnRefresh);
+		btnRefreshRT.setBounds(227, 19, 85, 21);
+		frame.getContentPane().add(btnRefreshRT);
 		
 		JLabel lblTo = new JLabel("(-9 to 99)");
 		lblTo.setBounds(159, 20, 61, 16);
 		frame.getContentPane().add(lblTo);
+		
+		JLabel lblNewLabel = new JLabel("Ambient temp:");
+		lblNewLabel.setBounds(6, 49, 101, 16);
+		frame.getContentPane().add(lblNewLabel);
+		
+		textAmbTemp = new JTextField(""+ambTemp);
+		textAmbTemp.setBounds(103, 43, 61, 28);
+		frame.getContentPane().add(textAmbTemp);
+		textAmbTemp.setColumns(10);
+		
+		JButton btnRefreshAT = new JButton("Refresh");
+		btnRefreshAT.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				int temp;
+				try{
+					temp = Integer.valueOf(textAmbTemp.getText());
+				}catch(NumberFormatException e){
+					JOptionPane.showMessageDialog(frame, "Wrong number", "Temperature", JOptionPane.ERROR_MESSAGE);
+					return;
+				}
+				
+				if(temp < -9 || temp > 99){
+					JOptionPane.showMessageDialog(frame, "Out of range", "Temperature", JOptionPane.ERROR_MESSAGE);
+					return;
+				}
+				
+				ambTemp = temp;
+			}
+		});
+		btnRefreshAT.setBounds(169, 48, 85, 21);
+		frame.getContentPane().add(btnRefreshAT);
+	}
+	
+	private class TempUpdater extends Thread{
+		
+		private TempUpdater(){
+			setDaemon(true);
+		}
+		
+		public void run(){
+			
+			float actTemp = 0.0F;
+			
+			while(true){
+				
+				try {
+					sleep(8000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				synchronized(f){
+					try {
+						actTemp = f.readFloat();
+						f.seek(0);
+						if(actTemp < ambTemp){
+							actTemp += 0.5F;
+							f.writeFloat(actTemp);
+							f.seek(0);
+						}else if(actTemp > ambTemp){
+							actTemp -= 0.5F;
+							f.writeFloat(actTemp);
+							f.seek(0);
+						}
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+					}
+				}
+			}
+		}
 	}
 }

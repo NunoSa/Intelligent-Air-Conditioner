@@ -28,7 +28,8 @@ public class Compressor extends Thread {
 	
 	public void run(){
 		
-		int speed, temp, curTemp;
+		int speed, temp;
+		float curTemp;
 		
 		while(true){
 			
@@ -49,18 +50,18 @@ public class Compressor extends Thread {
 				// temp = -speed + 45
 				temp = 45 - speed;
 				try {
-					curTemp = f.read();
+					curTemp = f.readFloat();
 					f.seek(0);
 					if(curTemp < temp){
 						
 						// Increase Temperature
-						f.write(++curTemp);
+						f.writeFloat(++curTemp);
 						f.seek(0);
 						
 					}else if(curTemp > temp){
 						
 						// Decrease Temperature
-						f.write(--curTemp);
+						f.writeFloat(--curTemp);
 						f.seek(0);
 					}
 				} catch (IOException e) {

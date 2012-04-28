@@ -55,7 +55,7 @@ public class TempSensor extends Thread{
 			}
 			
 			try {
-				sleep(100);
+				sleep(500);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -66,9 +66,9 @@ public class TempSensor extends Thread{
 	}
 	
 	private float readVoltage(){
-		int temp = 0;
+		float temp = 0.0F;
 		try {
-			temp = f.read();
+			temp = f.readFloat();
 			f.seek(0);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
