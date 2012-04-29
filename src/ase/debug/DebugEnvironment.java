@@ -5,8 +5,12 @@ import java.awt.EventQueue;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JButton;
+import javax.swing.text.DefaultCaret;
+
 import java.awt.event.InputMethodListener;
 import java.awt.event.InputMethodEvent;
 import java.awt.event.ActionListener;
@@ -14,18 +18,22 @@ import java.awt.event.ActionEvent;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
+import java.net.ServerSocket;
+import java.net.Socket;
 
 public class DebugEnvironment {
 
-	private JFrame frame;
-	private JTextField textRoomTemp;
 	private boolean movement = false;
-	private JTextField textAmbTemp;
 	private RandomAccessFile f;
 	private volatile int ambTemp = 20;
 	private TempUpdater tUpdater = new TempUpdater();
 
+	private ServerSocket providerSocket;
+	
+	
 	/**
 	 * Launch the application.
 	 */
@@ -52,16 +60,118 @@ public class DebugEnvironment {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		try {
+			providerSocket = new ServerSocket(2004);
+			System.out.println("Started Server Socket on Port 2004");
+			
+			new SocketThreadPool(providerSocket).start();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		System.out.println("Initializing Debug Window");
+		
 		initialize();
 		tUpdater.start();
 	}
+	
+	private class SocketThreadPool extends Thread
+	{
+		ServerSocket providerSocket;
+		
+		public SocketThreadPool(ServerSocket providerSocket)
+		{
+			this.providerSocket = providerSocket;
+		}
+		
+		@Override
+		public void run()
+		{
+			do
+			{
+				try {
+					System.out.println("Listening for Clients");
+					Socket connection = providerSocket.accept();
+					System.out.println("New Client Accepted");
+					new SocketThread(connection).start();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			} while (true);
+		}
+	}
+	
+	private class SocketThread extends Thread
+	{
+		private Socket socket;
+		private ObjectOutputStream out;
+		private ObjectInputStream in;
 
+		public SocketThread(Socket socket)
+		{
+			this.socket = socket;
+			System.out.println("Socket Open");
+		}
+		
+		public void run()
+		{
+			System.out.println("Running");
+
+			try {
+				out = new ObjectOutputStream(socket.getOutputStream());
+				out.flush();
+				in = new ObjectInputStream(socket.getInputStream());
+
+				String message = (String) in.readObject();
+				
+				System.out.println(message);
+				
+				// process message, and update accordingly
+				String[] parts = message.split("\\|");
+				
+				if (parts[0].equals("IREmitterOUT"))
+				{
+					textRemoteControlOut.append(parts[1], parts[3]);					
+				}
+			
+				if (parts[0].equals("IREmitterIN"))
+				{
+					textRemoteControlIn.append(parts[1], parts[3]);					
+				}
+
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+			} finally {
+				try{
+					in.close();
+					out.close();
+					//providerSocket.close();
+				} catch(IOException ioException) {
+					ioException.printStackTrace();
+				}
+			}
+
+			System.out.println("Finish");
+		}
+	}
+
+	JFrame frame;	
+	JTextField textRoomTemp;
+	JTextField textAmbTemp;
+
+	DebugTextArea textRemoteControlIn;
+	DebugTextArea textRemoteControlOut; 
+	
 	/**
 	 * Initialize the contents of the frame.
 	 */
-	private void initialize() {
+	private void initialize()
+	{
 		frame = new JFrame();
-		frame.setBounds(100, 100, 321, 138);
+		frame.setBounds(100, 100, 1000, 600);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.getContentPane().setLayout(null);
 		
@@ -168,11 +278,82 @@ public class DebugEnvironment {
 		});
 		btnRefreshAT.setBounds(169, 48, 85, 21);
 		frame.getContentPane().add(btnRefreshAT);
+
+		// Remote Control
+		JLabel labelRC = new JLabel("Remote Control");
+		labelRC.setBounds(20, 120, 200, 20);
+		frame.getContentPane().add(labelRC);
+		
+		JLabel labelRCIn = new JLabel("In");
+		labelRCIn.setBounds(20, 140, 200, 20);
+		frame.getContentPane().add(labelRCIn);
+
+		textRemoteControlIn = new DebugTextArea();
+		textRemoteControlIn.setBounds(20, 160, 200, 100);
+		frame.getContentPane().add(textRemoteControlIn);
+
+		JLabel labelRCOut = new JLabel("Out");
+		labelRCOut.setBounds(20, 260, 200, 20);
+		frame.getContentPane().add(labelRCOut);
+
+		textRemoteControlOut = new DebugTextArea();
+		textRemoteControlOut.setBounds(20, 280, 200, 100);
+		frame.getContentPane().add(textRemoteControlOut);
+
 	}
 	
-	private class TempUpdater extends Thread{
+	private class DebugTextArea extends JScrollPane
+	{
+		private int length;
+		private int lengthExtra;
+		private JTextArea textArea;		
+
+		public DebugTextArea()
+		{
+			super();
+
+			textArea = new JTextArea();
+			((DefaultCaret) textArea.getCaret()).setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
+			
+			
+			setViewportView(textArea);
+			setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		}
 		
-		private TempUpdater(){
+		public void append(String origin, String str)
+		{
+			length += str.length();
+			lengthExtra += str.length();
+			
+			String buffer = "";
+			
+			// breaks frames in parts with 8 bits
+			for(final String token : str.split("(?<=\\G.{10})"))
+			{
+			    buffer += token + "\n";
+			}
+			
+			//str = str + "\n";
+			
+			textArea.append(str);
+			
+			if (lengthExtra == 8)
+			{
+				textArea.append(" ");
+			}
+
+			if (lengthExtra >= 16)
+			{
+				lengthExtra = 0;
+				textArea.append("\n");
+			}
+		}
+	}
+	
+	private class TempUpdater extends Thread
+	{	
+		private TempUpdater()
+		{
 			setDaemon(true);
 		}
 		

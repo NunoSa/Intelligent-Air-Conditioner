@@ -1,6 +1,7 @@
 package ase.rcontrol;
 
 import ase.interfaces.InterruptibleModule;
+import ase.utils.Logger;
 
 public class Button {
 
@@ -12,7 +13,9 @@ public class Button {
 		this.ioPort = ioPort;
 	}
 	
-	public void pressed(){
+	public void pressed()
+	{
+		Logger.instance().debug("RControl", "Button", "" + ioPort);
 		this.module.interruptModule(ioPort);
 	}
 }

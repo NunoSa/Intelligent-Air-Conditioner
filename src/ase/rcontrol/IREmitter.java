@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.concurrent.ArrayBlockingQueue;
 
+import ase.utils.Logger;
+
 /**
  * 
  * TSAL6100
@@ -23,7 +25,8 @@ public class IREmitter{
 	
 	public IREmitter(){
 		try {
-			f = new RandomAccessFile("IR", "rwd");
+			File file = new File("IR");
+			f = new RandomAccessFile(file, "rwd");
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -35,6 +38,8 @@ public class IREmitter{
 		try {
 			f.write('1');
 			f.seek(0);
+			
+			Logger.instance().debug("IREmitterOUT", "turnOff", "1");
 			/*FileOutputStream out = new FileOutputStream(file);
 			out.write('1');
 			out.close();*/
@@ -49,6 +54,8 @@ public class IREmitter{
 		try {
 			f.write('0');
 			f.seek(0);
+
+			Logger.instance().debug("IREmitterOUT", "turnOff", "0");
 			/*FileOutputStream out = new FileOutputStream(file);
 			out.write('0');
 			out.close();*/

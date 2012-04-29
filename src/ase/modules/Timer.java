@@ -38,7 +38,6 @@ public class Timer extends Thread {
 			try {
 				signal = interruptSignal.poll(ms, TimeUnit.MILLISECONDS);
 			} catch (InterruptedException e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
 			/*try {

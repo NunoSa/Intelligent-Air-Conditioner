@@ -14,6 +14,7 @@ import javax.swing.JLabel;
 
 import ase.interfaces.InterruptibleModule;
 import ase.utils.ADCPin;
+import ase.utils.Logger;
 import ase.utils.Pin;
 
 public class MCU extends Thread implements InterruptibleModule{
@@ -157,6 +158,7 @@ public class MCU extends Thread implements InterruptibleModule{
 				while(RXD.readSignal()) reduceDelay();
 				
 				// Start bit Received
+				Logger.instance().debug("OutsideUnite", "UART Read", "1");
 				delay();
 				
 				String bytee = "";
@@ -164,14 +166,17 @@ public class MCU extends Thread implements InterruptibleModule{
 					if(RXD.readSignal()){
 						// Bit 1
 						bytee = bytee.concat("1");
-					}else
+					}else {
 						bytee = bytee.concat("0");
-					
+					}						
+
 					delay();
 				}
-				
+
 				int bite = Integer.parseInt(bytee, 2);
 				
+				Logger.instance().debug("OutsideUnite", "UART Read", "" + bytee + " = " + bite);
+
 				// Stop bit
 				/*if(!RXD.readSignal()){
 					System.err.println("Stop bit error");

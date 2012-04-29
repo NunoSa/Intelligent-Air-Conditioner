@@ -9,6 +9,7 @@ package ase.insideunit;
  */
 
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -20,7 +21,9 @@ public class IRSensor {
 	
 	public IRSensor(){
 		try {
-			f = new RandomAccessFile("IR", "r");
+			File file = new File("IR");
+			f = new RandomAccessFile(file, "rwd");
+			System.out.println(file.getAbsolutePath());
 		} catch (FileNotFoundException e) {
 			// Create file
 			try {
