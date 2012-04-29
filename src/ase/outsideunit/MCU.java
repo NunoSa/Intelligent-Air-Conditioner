@@ -74,13 +74,15 @@ public class MCU extends Thread implements InterruptibleModule{
 
 			if(byteReceived){
 				byteReceived = false;
-				char bytee = uart.shiftReg;
+				int bytee = uart.shiftReg;
 				
 				//Debug
-				System.out.println((int) bytee);
+				//System.out.println(bytee);
 				
-				float voltage = bytee / 100f;
-				compressorPin.sendVoltage(voltage, true);
+				if(bytee >= 0 && bytee <= 44){
+					float voltage = bytee / 100f;
+					compressorPin.sendVoltage(voltage, true);
+				}
 			}
 			
 		}
@@ -120,12 +122,21 @@ public class MCU extends Thread implements InterruptibleModule{
 	
 	private class UART extends Thread{
 		
-		private final static int BITDELAY = 30;
+		private final static int BITDELAY = 50;
 		
-		public char shiftReg;
+		public volatile int shiftReg;
 		
 		public UART(){
 			setDaemon(true);
+		}
+		
+		private void reduceDelay(){
+			try {
+				sleep(10);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		
 		private void delay(){
@@ -143,39 +154,36 @@ public class MCU extends Thread implements InterruptibleModule{
 			
 			while(true){
 				
-				while(RXD.readSignal()) delay();
-				
-				String frame = "0";
+				while(RXD.readSignal()) reduceDelay();
 				
 				// Start bit Received
 				delay();
 				
-				char bit = 0;
-				int base = 128;
-				for(int i = 0; i < 8; i++, base /= 2){
+				String bytee = "";
+				for(int i = 0; i < 8; i++){
 					if(RXD.readSignal()){
 						// Bit 1
-						bit += base;
-						frame = frame.concat("1");
+						bytee = bytee.concat("1");
 					}else
-						frame = frame.concat("0");
+						bytee = bytee.concat("0");
 					
 					delay();
 				}
 				
+				int bite = Integer.parseInt(bytee, 2);
+				
 				// Stop bit
-				if(!RXD.readSignal()){
+				/*if(!RXD.readSignal()){
 					System.err.println("Stop bit error");
 					frame = frame.concat("0");
-				}else{
+				}else{*/
 					if(!first){
-						shiftReg = bit;
+						shiftReg = bite;
 						interruptModule(UART_INTERRUPT);
 					}else 
 						first = false;
-					frame = frame.concat("1");
-				}
-				lblFrame.setText("Recv: "+frame);
+				//}
+				lblFrame.setText("Recv: "+bytee);
 				delay();
 			}
 		}

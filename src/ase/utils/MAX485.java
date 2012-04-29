@@ -16,7 +16,7 @@ public class MAX485 {
 
 	public static final boolean SLAVEMODE = false;
 	public static final boolean MASTERMODE = true;
-	private final static int BITDELAY = 30;
+	private final static int BITDELAY = 5;
 	private Pin DI;
 	private Pin RO;
 	private boolean RE_DE;
@@ -164,7 +164,8 @@ public class MAX485 {
 				}else if(a == '0' && b == '1'){
 					// Bit 1
 					RO.sendSignal(Pin.HIGH, false); //System.out.println("1");
-				}else continue;
+				}else
+					continue;
 				
 				try {
 					sleep(BITDELAY);

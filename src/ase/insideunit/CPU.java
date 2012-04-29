@@ -1,7 +1,6 @@
 package ase.insideunit;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.ByteArrayOutputStream;
 import java.util.concurrent.LinkedBlockingQueue;
 import javax.swing.JLabel;
 
@@ -95,6 +94,10 @@ public class CPU extends Thread implements InterruptibleModule {
 		
 		intHandler.start();
 		uart.start();
+		
+		float t1;
+		int t2;
+		String frame;
 
 		while(true){
 			
@@ -109,7 +112,7 @@ public class CPU extends Thread implements InterruptibleModule {
 			if(frameReady){
 				frameReady = false;
 				
-				String frame = "111";
+				frame = "111";
 				for(boolean b : frameReceived)
 					if(b) frame = frame.concat("1");
 					else frame = frame.concat("0");
@@ -122,26 +125,20 @@ public class CPU extends Thread implements InterruptibleModule {
 						break;
 					case 16:
 						// Up command
-						if(irTemp < 99){
+						if(irTemp < 44){
 							irTemp++;
 							lblRemoteTemp.setText("Temp: "+irTemp);
 							
-							// temp = -speed + 45 <=> speed = 45 - temp
-							int speed = 45 - irTemp;
-							uart.shiftReg = (char) speed;
-							uart.busy = true;
+							updateOutsideUnit();
 						}
 						break;
 					case 17:
 						// Down command
-						if(irTemp > -5){
+						if(irTemp > 0){
 							irTemp--;
 							lblRemoteTemp.setText("Temp: "+irTemp);
 							
-							// temp = -speed + 45 <=> speed = 45 - temp
-							int speed = 45 - irTemp;
-							uart.shiftReg = (char) speed;
-							uart.busy = true;
+							updateOutsideUnit();
 						}
 						break;
 				}
@@ -152,11 +149,31 @@ public class CPU extends Thread implements InterruptibleModule {
 				tempChanged = false;
 				
 				// Convert voltage into temperature value
-				envTemp = (int) (tempSensorPin.readVoltage() * 100f - 50f);
-				setDisplayNumber(envTemp);
+				t1 = tempSensorPin.readVoltage() * 100f - 50f;
+				t2 = (int) t1;
+				if(t2 == t1){
+					envTemp = t2;
+					setDisplayNumber(envTemp);
+					if(envTemp == irTemp) TurnOffOutsideUnit();
+					else updateOutsideUnit();
+				}else
+					updateOutsideUnit();
 			}
-			
 		}
+	}
+	
+	private void TurnOffOutsideUnit(){
+		while(uart.busy);
+		uart.shiftReg = 0;
+		uart.busy = true;
+	}
+	
+	private void updateOutsideUnit(){
+		
+		int speed = 45 - irTemp;
+		while(uart.busy);
+		uart.shiftReg = speed;
+		uart.busy = true;
 	}
 	
 	public void configurePins(Pin ir, ADCPin temp, Pin pir, Pin txd, Pin rxd){
@@ -198,12 +215,11 @@ public class CPU extends Thread implements InterruptibleModule {
 	
 	private class UART extends Thread{
 	
-		public volatile char shiftReg;
+		//public volatile char shiftReg;
+		public volatile int shiftReg;
 		public volatile boolean busy = false;
 		
-		private boolean[] frame = new boolean[10];
-		
-		private final static int BITDELAY = 30;
+		private final static int BITDELAY = 50;
 		
 		public UART(){
 			setDaemon(true);
@@ -222,6 +238,8 @@ public class CPU extends Thread implements InterruptibleModule {
 			
 			TXD.sendSignal(Pin.HIGH, true);
 			
+			String conc, bitRep;
+			
 			while(true){
 				
 				while(!busy) delay();
@@ -230,35 +248,28 @@ public class CPU extends Thread implements InterruptibleModule {
 					busy = false;
 					continue;
 				}
+
+				bitRep = Integer.toString(shiftReg, 2);
+				conc = "";
+				for(int i = bitRep.length(); i < 8; i++)
+					conc = conc.concat("0");
 				
-				String tmp = "0";
+				bitRep = conc.concat(bitRep);
+				
+				lblOutsideFrame.setText("Sent: "+bitRep);
+				
 				// Start bit
-				frame[0] = false;
-				
-				int base = 128;
-				// Char bits
-				for(int i = 1; i < 9; i++, base /= 2){
-					if(shiftReg / base == 0){
-						// Bit 0
-						frame[i] = false; tmp = tmp.concat("0");
-					}else{
-						// Bit 1
-						frame[i] = true; tmp = tmp.concat("1");
-						shiftReg -= base;
-					}
+				TXD.sendSignal(Pin.LOW, true);
+				delay();
+				for(int i = 0; i < 8; i++){
+					if(bitRep.charAt(i) == '0')
+						TXD.sendSignal(Pin.LOW, true);
+					else
+						TXD.sendSignal(Pin.HIGH, true);
+					delay();
 				}
 				// Stop bit
-				frame[9] = true; tmp = tmp.concat("1");
-				
-				lblOutsideFrame.setText("Sent: "+tmp);
-				
-				for(int i = 0; i < 10; i++){
-					delay();
-					if(frame[i])
-						TXD.sendSignal(Pin.HIGH, true);
-					else
-						TXD.sendSignal(Pin.LOW, true);
-				}
+				TXD.sendSignal(Pin.HIGH, true);
 				
 				busy = false;
 			}

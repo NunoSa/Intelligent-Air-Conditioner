@@ -183,7 +183,7 @@ public class DebugEnvironment {
 			while(true){
 				
 				try {
-					sleep(8000);
+					sleep(10000);
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
