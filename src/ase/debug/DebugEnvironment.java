@@ -63,14 +63,14 @@ public class DebugEnvironment {
 		
 		try {
 			providerSocket = new ServerSocket(2004);
-			System.out.println("Started Server Socket on Port 2004");
+			//System.out.println("Started Server Socket on Port 2004");
 			
 			new SocketThreadPool(providerSocket).start();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
-		System.out.println("Initializing Debug Window");
+		//System.out.println("Initializing Debug Window");
 		
 		initialize();
 		tUpdater.start();
@@ -91,9 +91,9 @@ public class DebugEnvironment {
 			do
 			{
 				try {
-					System.out.println("Listening for Clients");
+					//System.out.println("Listening for Clients");
 					Socket connection = providerSocket.accept();
-					System.out.println("New Client Accepted");
+					//System.out.println("New Client Accepted");
 					new SocketThread(connection).start();
 				} catch (IOException e) {
 					e.printStackTrace();
@@ -111,12 +111,12 @@ public class DebugEnvironment {
 		public SocketThread(Socket socket)
 		{
 			this.socket = socket;
-			System.out.println("Socket Open");
+			//System.out.println("Socket Open");
 		}
 		
 		public void run()
 		{
-			System.out.println("Running");
+			//System.out.println("Running");
 
 			try {
 				out = new ObjectOutputStream(socket.getOutputStream());
@@ -125,7 +125,7 @@ public class DebugEnvironment {
 
 				String message = (String) in.readObject();
 				
-				System.out.println(message);
+				//System.out.println(message);
 				
 				// process message, and update accordingly
 				String[] parts = message.split("\\|");
@@ -163,7 +163,7 @@ public class DebugEnvironment {
 				}
 			}
 
-			System.out.println("Finish");
+			//System.out.println("Finish");
 		}
 	}
 

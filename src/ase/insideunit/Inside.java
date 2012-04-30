@@ -181,18 +181,18 @@ public class Inside{
 		JLabel lblInt = new JLabel("Int");
 		lblInt.setBounds(178, 6, 17, 16);
 		frmInsideUnit.getContentPane().add(lblInt);
-		lblRemote.setBounds(16, 163, 61, 16);
+		lblRemote.setBounds(16, 163, 100, 16);
 		
 		frmInsideUnit.getContentPane().add(lblRemote);
 		lblRemoteFrame.setBounds(6, 182, 158, 16);
 		
 		frmInsideUnit.getContentPane().add(lblRemoteFrame);
-		lblRemoteTemp.setBounds(6, 200, 88, 16);
+		lblRemoteTemp.setBounds(6, 200, 100, 16);
 		
 		frmInsideUnit.getContentPane().add(lblRemoteTemp);
 		
 		JLabel lblOutside = new JLabel("Outside:");
-		lblOutside.setBounds(16, 228, 61, 16);
+		lblOutside.setBounds(16, 228, 100, 16);
 		frmInsideUnit.getContentPane().add(lblOutside);
 		
 		lblOutsideFrame.setBounds(6, 251, 158, 16);
