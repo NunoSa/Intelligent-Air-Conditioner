@@ -7,6 +7,7 @@ package ase.insideunit;
  * $2.28
  */
 
+import ase.utils.Logger;
 import ase.utils.Pin;
 
 public class IRReceiver extends Thread {
@@ -58,10 +59,16 @@ public class IRReceiver extends Thread {
 			do{
 				delay();
 			}while(!sensor.readValue());
+			
+			Logger.instance().debug("IRReceiverIN", "Run", "1");
 		
 			//signalPair[0] = true;
 			delay();
-			if(sensor.readValue()) continue;
+			if(sensor.readValue()){
+				Logger.instance().debug("IRReceiverIN", "Run", "1");
+				continue;
+			}
+			Logger.instance().debug("IRReceiverIN", "Run", "0");
 			/*signalPair[1] = sensor.readValue();
 			if(!sendValidBit()) continue;*/
 			
@@ -69,10 +76,20 @@ public class IRReceiver extends Thread {
 			
 			for(int i = 0; i < 2; i++){
 				delay();
-				if(!sensor.readValue()) { error = true; break; }
+				if(!sensor.readValue()) {
+					Logger.instance().debug("IRReceiverIN", "Run", "0");
+					error = true; 
+					break; 
+				}
+				Logger.instance().debug("IRReceiverIN", "Run", "1");
 				//signalPair[0] = true;
 				delay();
-				if(sensor.readValue()) { error = true; break; }
+				if(sensor.readValue()) {
+					Logger.instance().debug("IRReceiverIN", "Run", "1");
+					error = true; 
+					break;
+				}
+				Logger.instance().debug("IRReceiverIN", "Run", "0");
 				/*signalPair[1] = sensor.readValue();
 				if(!sendValidBit()) { error = true; break; }*/	
 			}
@@ -82,14 +99,12 @@ public class IRReceiver extends Thread {
 			for(int i = 0; i < 11 ; i++){
 				delay();
 				signalPair[0] = sensor.readValue();
+				Logger.instance().debug("IRReceiverIN", "Run", signalPair[0] ? "1" : "0");
 				delay();
 				signalPair[1] = sensor.readValue();
-				if(!sendValidBit()){
-					error = true;
-					break;
-				}
+				Logger.instance().debug("IRReceiverIN", "Run", signalPair[1] ? "1" : "0");
+				if(!sendValidBit()) break;
 			}
-			if(error) continue;
 		}
 		
 	}
