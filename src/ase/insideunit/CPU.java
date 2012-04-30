@@ -1,6 +1,5 @@
 package ase.insideunit;
 
-import java.io.ByteArrayOutputStream;
 import java.util.concurrent.LinkedBlockingQueue;
 import javax.swing.JLabel;
 
@@ -8,6 +7,7 @@ import ase.interfaces.InterruptibleModule;
 import ase.modules.Led;
 import ase.modules.Timer;
 import ase.utils.ADCPin;
+import ase.utils.Logger;
 import ase.utils.Pin;
 
 public class CPU extends Thread implements InterruptibleModule {
@@ -287,16 +287,21 @@ public class CPU extends Thread implements InterruptibleModule {
 				
 				// Start bit
 				TXD.sendSignal(Pin.LOW, true);
+				Logger.instance().debug("InsideUnitOUT", "UART Write", "0");
 				delay();
 				for(int i = 0; i < 8; i++){
-					if(bitRep.charAt(i) == '0')
+					if(bitRep.charAt(i) == '0'){
 						TXD.sendSignal(Pin.LOW, true);
-					else
+						Logger.instance().debug("InsideUnitOUT", "UART Write", "0");
+					} else{
 						TXD.sendSignal(Pin.HIGH, true);
+						Logger.instance().debug("InsideUnitOUT", "UART Write", "1");
+					}
 					delay();
 				}
 				// Stop bit
 				TXD.sendSignal(Pin.HIGH, true);
+				Logger.instance().debug("InsideUnitOUT", "UART Write", "1");
 				
 				busy = false;
 			}
