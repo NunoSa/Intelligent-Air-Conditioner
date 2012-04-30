@@ -26,15 +26,10 @@ public class PIR extends Thread{
 		try {
 			f = new RandomAccessFile("MOV", "r");
 		} catch (FileNotFoundException e) {
-			// Create file
 			try {
-				FileWriter fw = new FileWriter("MOV");
-				fw.write('0');
-				fw.close();
-				
-				f = new RandomAccessFile("MOV", "r");
-			} catch (IOException e1) {
-				System.err.println(e1);
+				f = new RandomAccessFile("MOV", "rwd");
+			} catch (FileNotFoundException e1) {
+				//Ignore
 			}
 		}
 	}

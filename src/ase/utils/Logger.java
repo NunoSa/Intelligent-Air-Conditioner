@@ -73,7 +73,7 @@ public class Logger
 			requestSocket.close();			
 			
 		} catch (IOException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 	}
 

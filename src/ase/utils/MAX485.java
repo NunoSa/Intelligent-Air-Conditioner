@@ -9,11 +9,16 @@ package ase.utils;
  */
 
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
 public class MAX485 {
 
+	// Default values
+	private static final char defaultA = '0';
+	private static final char defaultB = '1';
+	
 	public static final boolean SLAVEMODE = false;
 	public static final boolean MASTERMODE = true;
 	private final static int BITDELAY = 5;
@@ -130,14 +135,28 @@ public class MAX485 {
 			try {
 				A = new RandomAccessFile("A", "r");
 			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				try {
+					FileWriter writer = new FileWriter("A");
+					writer.write(defaultA);
+					writer.close();
+					A = new RandomAccessFile("A", "rwd");
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 			}
 			try {
 				B = new RandomAccessFile("B", "r");
 			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				try {
+					FileWriter writer = new FileWriter("B");
+					writer.write(defaultB);
+					writer.close();
+					B = new RandomAccessFile("B", "rwd");
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 			}
 			start();
 		}

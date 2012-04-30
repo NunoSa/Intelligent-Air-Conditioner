@@ -39,7 +39,7 @@ public class Inside{
 	private final JLabel lblRemoteTemp = new JLabel("Temp:");
 	private JLabel lblOutsideFrame = new JLabel("Sent:");
 	
-	private CPU cpuModule = new CPU(lblRemoteFrame, lblRemoteTemp, lblOutsideFrame, "00001");
+	private CPU cpuModule = new CPU(lblRemoteFrame, lblRemoteTemp, lblOutsideFrame, 1);
 	
 	/* Pins */
 	private Pin Ir_MCU_Pin = new Pin(cpuModule, CPU.IRPIN);

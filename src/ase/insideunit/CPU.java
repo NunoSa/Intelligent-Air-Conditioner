@@ -56,38 +56,44 @@ public class CPU extends Thread implements InterruptibleModule {
 	private int irTemp = 20;
 	private int envTemp = 20;
 	
-	private boolean[] address = new boolean[5];
+	private int irAddress;
 	private boolean[] irFrame = new boolean[11];
 	private boolean[] frameReceived = new boolean[11];
 	private volatile int irBitCounter = 0;
 	
-	public CPU(JLabel frame, JLabel temp, JLabel out, String add){
+	public CPU(JLabel frame, JLabel temp, JLabel out, int add){
 		this.lblRemoteTemp = temp;
 		this.lblRemoteFrame = frame;
 		this.lblOutsideFrame = out;
-		for(int i = 0; i < 5; i++){
-			if(add.charAt(i) == '1')
-				address[i] = true;
-			else 
-				address[i] = false;
-		}
+		this.irAddress = add;
 	}
 	
 	private int checkFrame(){
 		
+		// Get Address
+		String bits = "";
 		for(int i = 0; i < 5; i++)
-			if(frameReceived[i] != address[i]){
-				System.out.println("Different Address");
-				return -1;
-			}
-		
-		int base = 32, command = 0;
-		for(int i = 5; i < 11; i++){
-			if(frameReceived[i]) command += base;
-			base /= 2;
+			if(frameReceived[i])
+				bits = bits.concat("1");
+			else
+				bits = bits.concat("0");
+				
+		// Check address	
+		int address = Integer.parseInt(bits, 2);
+		if(address != irAddress){
+			System.err.println("Frame with different address!");
+			return -1;
 		}
-		
-		return command;
+				
+		bits = "";
+		for(int i = 5; i < 11; i++){
+			if(frameReceived[i])
+				bits = bits.concat("1");
+			else
+				bits = bits.concat("0");
+		}
+				
+		return Integer.parseInt(bits, 2);
 	}
 	
 	public void run(){
@@ -300,8 +306,8 @@ public class CPU extends Thread implements InterruptibleModule {
 				
 				this.cpu.suspend();
 				switch(pin){
+				
 					case IRPIN:
-						//System.out.println("Int "+irPin.readSignal()+" "+irBitCounter);
 						if(irBitCounter == 0){
 							irFrame[irBitCounter++] = irPin.readSignal();
 							irTimer.initiate(IRFRAMEDELAY);
@@ -315,15 +321,18 @@ public class CPU extends Thread implements InterruptibleModule {
 							}
 						}
 						break;
+						
 					case IRTIMERPIN:
 						if(!ignoreIrTimerInterrupt)
 							irBitCounter = 0;
 						else
 							ignoreIrTimerInterrupt = false;
 						break;
+						
 					case TEMPSENSORPIN:
 						tempChanged = true;
 						break;
+						
 					case PIRPIN:
 						// TODO handle
 						if(pirPin.readSignal())
@@ -331,6 +340,7 @@ public class CPU extends Thread implements InterruptibleModule {
 						else
 							System.out.println("Not moving");
 						break;
+						
 				}
 				this.cpu.resume();
 			}
