@@ -58,7 +58,7 @@ public class IRReceiver extends Thread {
 			do{
 				delay();
 			}while(!sensor.readValue());
-		
+
 			//signalPair[0] = true;
 			delay();
 			if(sensor.readValue()) continue;

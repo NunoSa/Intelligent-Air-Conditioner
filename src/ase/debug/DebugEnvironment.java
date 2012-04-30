@@ -140,6 +140,15 @@ public class DebugEnvironment {
 					textRemoteControlIn.append(parts[1], parts[3]);					
 				}
 
+				if (parts[0].equals("InsideUnitOUT"))
+				{
+					textRemoteControlOut.append(parts[1], parts[3]);					
+				}
+			
+				if (parts[0].equals("InsideUnitIN"))
+				{
+					textRemoteControlIn.append(parts[1], parts[3]);					
+				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			} catch (ClassNotFoundException e) {
@@ -164,6 +173,9 @@ public class DebugEnvironment {
 
 	DebugTextArea textRemoteControlIn;
 	DebugTextArea textRemoteControlOut; 
+	
+	DebugTextArea textInsideUnitIn;
+	DebugTextArea textInsideUnitOut; 
 	
 	/**
 	 * Initialize the contents of the frame.
@@ -299,6 +311,27 @@ public class DebugEnvironment {
 		textRemoteControlOut = new DebugTextArea();
 		textRemoteControlOut.setBounds(20, 280, 200, 100);
 		frame.getContentPane().add(textRemoteControlOut);
+
+		// Inside Unit
+		JLabel labelIU = new JLabel("Inside Unit");
+		labelIU.setBounds(220, 120, 200, 20);
+		frame.getContentPane().add(labelIU);
+		
+		JLabel labelIUIn = new JLabel("In");
+		labelIUIn.setBounds(220, 140, 200, 20);
+		frame.getContentPane().add(labelIUIn);
+
+		textInsideUnitIn = new DebugTextArea();
+		textInsideUnitIn.setBounds(220, 160, 200, 100);
+		frame.getContentPane().add(textInsideUnitIn);
+
+		JLabel labelIUOut = new JLabel("Out");
+		labelIUOut.setBounds(220, 260, 200, 20);
+		frame.getContentPane().add(labelIUOut);
+
+		textInsideUnitOut = new DebugTextArea();
+		textInsideUnitOut.setBounds(220, 280, 200, 100);
+		frame.getContentPane().add(textInsideUnitOut);
 
 	}
 	

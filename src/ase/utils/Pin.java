@@ -22,7 +22,8 @@ public class Pin {
 			if(!mcu) module.interruptModule(pinNumber);
 	}
 	
-	public synchronized boolean readSignal(){
+	public synchronized boolean readSignal()
+	{
 		return pinValue;
 	}
 
