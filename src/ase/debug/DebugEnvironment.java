@@ -61,6 +61,8 @@ public class DebugEnvironment {
 			e.printStackTrace();
 		}
 		
+		initialize();
+		
 		try {
 			providerSocket = new ServerSocket(2004);
 			//System.out.println("Started Server Socket on Port 2004");
@@ -69,10 +71,7 @@ public class DebugEnvironment {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
-		//System.out.println("Initializing Debug Window");
 		
-		initialize();
 		tUpdater.start();
 	}
 	
@@ -135,19 +134,24 @@ public class DebugEnvironment {
 					textRemoteControlOut.append(parts[1], parts[3]);					
 				}
 			
-				if (parts[0].equals("IREmitterIN"))
+				/*if (parts[0].equals("IREmitterIN"))
 				{
 					textRemoteControlIn.append(parts[1], parts[3]);					
-				}
+				}*/
 
 				if (parts[0].equals("InsideUnitOUT"))
 				{
-					textRemoteControlOut.append(parts[1], parts[3]);					
+					textInsideUnitOut.append(parts[1], parts[3]);					
 				}
 			
 				if (parts[0].equals("IRReceiverIN"))
 				{
 					textInsideUnitIn.append(parts[1], parts[3]);					
+				}
+				
+				if (parts[0].equals("OutsideUnitIn"))
+				{
+					textOutsideUnitIn.append(parts[1], parts[3]);					
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -172,10 +176,13 @@ public class DebugEnvironment {
 	JTextField textAmbTemp;
 
 	DebugTextArea textRemoteControlIn;
-	DebugTextArea textRemoteControlOut; 
+	DebugTextArea textRemoteControlOut;
 	
 	DebugTextArea textInsideUnitIn;
-	DebugTextArea textInsideUnitOut; 
+	DebugTextArea textInsideUnitOut;
+	
+	DebugTextArea textOutsideUnitIn;
+	DebugTextArea textOutsideUnitOut;
 	
 	/**
 	 * Initialize the contents of the frame.
@@ -183,7 +190,7 @@ public class DebugEnvironment {
 	private void initialize()
 	{
 		frame = new JFrame();
-		frame.setBounds(100, 100, 1000, 600);
+		frame.setBounds(100, 100, 636, 476);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.getContentPane().setLayout(null);
 		
@@ -293,7 +300,7 @@ public class DebugEnvironment {
 
 		// Clear Button
 		JButton buttonClear = new JButton("Clear");
-		buttonClear.setBounds(20, 540, 100, 20);
+		buttonClear.setBounds(20, 413, 100, 20);
 		frame.getContentPane().add(buttonClear);
 		buttonClear.addActionListener(new ActionListener() {
 			@Override
@@ -304,6 +311,9 @@ public class DebugEnvironment {
 				
 				textInsideUnitIn.clear();
 				textInsideUnitOut.clear();
+				
+				textOutsideUnitIn.clear();
+				textOutsideUnitOut.clear();
 			}
 		});
 		
@@ -348,6 +358,35 @@ public class DebugEnvironment {
 		textInsideUnitOut = new DebugTextArea();
 		textInsideUnitOut.setBounds(220, 280, 200, 100);
 		frame.getContentPane().add(textInsideUnitOut);
+		
+		// Outside Unit
+		JLabel labelOU = new JLabel("Outside Unit");
+		labelOU.setBounds(420, 120, 200, 20);
+		frame.getContentPane().add(labelOU);
+				
+		JLabel labelOUIn = new JLabel("In");
+		labelOUIn.setBounds(420, 140, 200, 20);
+		frame.getContentPane().add(labelOUIn);
+
+		textOutsideUnitIn = new DebugTextArea();
+		textOutsideUnitIn.setBounds(420, 160, 200, 100);
+		frame.getContentPane().add(textOutsideUnitIn);
+		
+		JLabel labelOUOut = new JLabel("Out");
+		labelOUIn.setBounds(420, 260, 200, 20);
+		frame.getContentPane().add(labelOUOut);
+
+		textOutsideUnitOut = new DebugTextArea();
+		textOutsideUnitOut.setBounds(420, 280, 200, 100);
+		frame.getContentPane().add(textOutsideUnitOut);
+
+		/*JLabel labelIUOut = new JLabel("Out");
+		labelIUOut.setBounds(220, 260, 200, 20);
+		frame.getContentPane().add(labelIUOut);
+
+		textInsideUnitOut = new DebugTextArea();
+		textInsideUnitOut.setBounds(220, 280, 200, 100);
+		frame.getContentPane().add(textInsideUnitOut);*/
 
 	}
 	

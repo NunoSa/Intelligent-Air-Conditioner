@@ -158,7 +158,7 @@ public class MCU extends Thread implements InterruptibleModule{
 				while(RXD.readSignal()) reduceDelay();
 				
 				// Start bit Received
-				Logger.instance().debug("OutsideUnite", "UART Read", "1");
+				Logger.instance().debug("OutsideUnitIn", "UART Read", "0");
 				delay();
 				
 				String bytee = "";
@@ -166,28 +166,30 @@ public class MCU extends Thread implements InterruptibleModule{
 					if(RXD.readSignal()){
 						// Bit 1
 						bytee = bytee.concat("1");
+						Logger.instance().debug("OutsideUnitIn", "UART Read", "1");
 					}else {
+						// Bit 0
 						bytee = bytee.concat("0");
+						Logger.instance().debug("OutsideUnitIn", "UART Read", "0");
 					}						
 
 					delay();
 				}
 
 				int bite = Integer.parseInt(bytee, 2);
-				
-				Logger.instance().debug("OutsideUnite", "UART Read", "" + bytee + " = " + bite);
 
 				// Stop bit
-				/*if(!RXD.readSignal()){
-					System.err.println("Stop bit error");
-					frame = frame.concat("0");
-				}else{*/
-					if(!first){
-						shiftReg = bite;
-						interruptModule(UART_INTERRUPT);
-					}else 
-						first = false;
-				//}
+				if(!RXD.readSignal())
+					Logger.instance().debug("OutsideUnitIn", "UART Read", "0");
+				else
+					Logger.instance().debug("OutsideUnitIn", "UART Read", "1");
+					
+				if(!first){
+					shiftReg = bite;
+					interruptModule(UART_INTERRUPT);
+				}else 
+					first = false;
+				
 				lblFrame.setText("Recv: "+bytee);
 				delay();
 			}
