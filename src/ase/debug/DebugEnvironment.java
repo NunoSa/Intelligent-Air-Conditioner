@@ -145,9 +145,9 @@ public class DebugEnvironment {
 					textRemoteControlOut.append(parts[1], parts[3]);					
 				}
 			
-				if (parts[0].equals("InsideUnitIN"))
+				if (parts[0].equals("IRReceiverIN"))
 				{
-					textRemoteControlIn.append(parts[1], parts[3]);					
+					textInsideUnitIn.append(parts[1], parts[3]);					
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -291,6 +291,22 @@ public class DebugEnvironment {
 		btnRefreshAT.setBounds(169, 48, 85, 21);
 		frame.getContentPane().add(btnRefreshAT);
 
+		// Clear Button
+		JButton buttonClear = new JButton("Clear");
+		buttonClear.setBounds(20, 540, 100, 20);
+		frame.getContentPane().add(buttonClear);
+		buttonClear.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0)
+			{
+				textRemoteControlOut.clear();
+				textRemoteControlIn.clear();
+				
+				textInsideUnitIn.clear();
+				textInsideUnitOut.clear();
+			}
+		});
+		
 		// Remote Control
 		JLabel labelRC = new JLabel("Remote Control");
 		labelRC.setBounds(20, 120, 200, 20);
@@ -351,6 +367,11 @@ public class DebugEnvironment {
 			
 			setViewportView(textArea);
 			setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		}
+		
+		public void clear()
+		{
+			textArea.setText("");
 		}
 		
 		public void append(String origin, String str)
