@@ -24,19 +24,17 @@ public class Logger
 		
 		return logger;
 	}
-	
-	private FileWriter writer;
-	
+		
 	private Logger()
 	{
-		try {
-			writer = new FileWriter("log");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
-	
+
 	public void debug(String module, String method, String frame)
+	{
+		
+	}
+
+	public void debug2(String module, String method, String frame)
 	{
 			long millis = System.currentTimeMillis();
 			Date date = new Date(millis);
