@@ -79,7 +79,6 @@ public class RControl extends JFrame {
 		upButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				lblSent.setText("Sent: 111"+irAddress+"010000");
-				//IRmodule.sendCommand("010000");	// Volume+ code
 				bTempUp.pressed();
 			}
 		});
@@ -92,7 +91,6 @@ public class RControl extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				lblSent.setText("Sent: 111"+irAddress+"010001");
 				bTempDown.pressed();
-				//IRmodule.sendCommand("010001");	// Volume- code
 			}
 		});
 		downButton.setIcon(new ImageIcon(RControl.class.getResource("/down.png")));

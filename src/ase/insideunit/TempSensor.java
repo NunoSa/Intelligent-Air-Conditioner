@@ -42,6 +42,8 @@ public class TempSensor extends Thread{
 	
 	public void run(){
 		
+		suspend();
+		
 		float volt;
 		
 		while(true){

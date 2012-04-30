@@ -36,6 +36,8 @@ public class PIR extends Thread{
 	
 	public void run(){
 		
+		suspend();
+		
 		while(true){
 			
 			if(moving != checkMovement()){
