@@ -9,19 +9,24 @@ package ase.utils;
  */
 
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
 public class MAX485 {
 
+	// Default values
+	private static final char defaultA = '0';
+	private static final char defaultB = '1';
+	
 	public static final boolean SLAVEMODE = false;
 	public static final boolean MASTERMODE = true;
 	private final static int BITDELAY = 5;
 	private Pin DI;
 	private Pin RO;
 	private boolean RE_DE;
-	private Transceiver t;
-	private Receiver d;
+	private Transceiver t = null;
+	private Receiver d = null;
 	
 	public MAX485(Pin di, Pin ro, boolean re_de){
 		this.DI = di;
@@ -32,7 +37,7 @@ public class MAX485 {
 	
 	public void start(){
 		if(RE_DE) t = new Transceiver();
-		else d = new Receiver();
+		else if(d == null) d = new Receiver();
 	}
 	
 	public void setRE_DE(boolean mode){
@@ -42,11 +47,19 @@ public class MAX485 {
 		if(mode){
 			// Master Mode
 			d.stop = true;
+			d = null;
 			t = new Transceiver();
 		}else{
 			// Slave mode
 			t.stop = true;
+			t = null;
 			d = new Receiver();
+		}
+	}
+	
+	public void stop(){
+		if(RE_DE){ // Master mode
+			t.stop = true;
 		}
 	}
 	
@@ -110,7 +123,10 @@ public class MAX485 {
 				}
 			}
 			
+			// Shutdown
 			try {
+				A.write('0');
+				B.write('0');
 				A.close();
 				B.close();
 			} catch (IOException e) {
@@ -130,14 +146,28 @@ public class MAX485 {
 			try {
 				A = new RandomAccessFile("A", "r");
 			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				try {
+					FileWriter writer = new FileWriter("A");
+					writer.write(defaultA);
+					writer.close();
+					A = new RandomAccessFile("A", "rwd");
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 			}
 			try {
 				B = new RandomAccessFile("B", "r");
 			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				try {
+					FileWriter writer = new FileWriter("B");
+					writer.write(defaultB);
+					writer.close();
+					B = new RandomAccessFile("B", "rwd");
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 			}
 			start();
 		}
@@ -158,14 +188,20 @@ public class MAX485 {
 					e.printStackTrace();
 				}
 				
-				if(a == '1' && b == '0'){
+				if(b == '1'){
+					
+					if(a == '0')
+						// Bit 1
+						RO.sendSignal(Pin.HIGH, false); //System.out.println("1");
+					else
+						// Wrong signals (b and a are '1'), read again!
+						continue;
+
+				}else if(a == '1')
 					// Bit 0
 					RO.sendSignal(Pin.LOW, false);
-				}else if(a == '0' && b == '1'){
-					// Bit 1
-					RO.sendSignal(Pin.HIGH, false); //System.out.println("1");
-				}else
-					continue;
+					
+				// If b and a are '0' means serial is powered off
 				
 				try {
 					sleep(BITDELAY);

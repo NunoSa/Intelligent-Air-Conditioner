@@ -39,7 +39,7 @@ public class Inside{
 	private final JLabel lblRemoteTemp = new JLabel("Temp:");
 	private JLabel lblOutsideFrame = new JLabel("Sent:");
 	
-	private CPU cpuModule = new CPU(lblRemoteFrame, lblRemoteTemp, lblOutsideFrame, "00001");
+	private CPU cpuModule = new CPU(this, lblRemoteFrame, lblRemoteTemp, lblOutsideFrame, 1);
 	
 	/* Pins */
 	private Pin Ir_MCU_Pin = new Pin(cpuModule, CPU.IRPIN);
@@ -49,7 +49,6 @@ public class Inside{
 	private Pin TXDPin = new Pin(cpuModule, CPU.TXDPIN); 
 	
 	/* Modules */
-	private ReentrantLock bus = new ReentrantLock();
 	private IRReceiver ir = new IRReceiver(Ir_MCU_Pin);
 	private TempSensor tSensor = new TempSensor(Temp_MCU_Pin);
 	private PIR pir = new PIR(PIR_MCU_Pin);
@@ -99,9 +98,10 @@ public class Inside{
 		this.cpuModule.configureLeds(ha, hb, hc, hd, he, hf, hg, la, lb, lc, ld, le, lf, lg, lint);
 		this.cpuModule.start();
 		this.ir.start();
+		
 		this.tSensor.start();
 		this.pir.start();
-		this.max485.start();
+		//this.max485.start();
 	}
 
 	/**
@@ -198,5 +198,18 @@ public class Inside{
 		lblOutsideFrame.setBounds(6, 251, 158, 16);
 		frmInsideUnit.getContentPane().add(lblOutsideFrame);
 		
+	}
+	
+	public void PowerOn(){
+		max485.start();
+		pir.resume();
+		tSensor.resume();
+	}
+	
+	public void PowerOff(){
+
+		pir.suspend();
+		tSensor.suspend();
+		max485.stop();
 	}
 }

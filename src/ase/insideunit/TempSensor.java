@@ -21,7 +21,7 @@ public class TempSensor extends Thread{
 	private float voltage = 100f;
 	private ADCPin pin;
 	
-	private static final int defaultTemp = 20;
+	private static final float defaultTemp = 20F;
 	
 	public TempSensor(ADCPin p){
 		this.pin = p;
@@ -30,11 +30,9 @@ public class TempSensor extends Thread{
 		} catch (FileNotFoundException e) {
 			// Create file
 			try {
-				FileWriter fw = new FileWriter("TEMP");
-				fw.write(defaultTemp);
-				fw.close();
-				
-				f = new RandomAccessFile("TEMP", "r");
+				f = new RandomAccessFile("TEMP", "rwd");
+				f.writeFloat(defaultTemp);
+				f.seek(0);
 			} catch (IOException e1) {
 				System.err.println(e1);
 			}
@@ -43,6 +41,8 @@ public class TempSensor extends Thread{
 	}
 	
 	public void run(){
+		
+		suspend();
 		
 		float volt;
 		

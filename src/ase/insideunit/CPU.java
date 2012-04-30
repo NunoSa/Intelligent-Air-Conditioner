@@ -28,11 +28,13 @@ public class CPU extends Thread implements InterruptibleModule {
 	public static final int TXDPIN = 5;
 	private Pin TXD;
 	
-	private UART uart = new UART();
+	private UART uart;// = new UART();
 	
 	private Led ha, hb, hc, hd, he, hf, hg;
 	private Led la, lb, lc, ld, le, lf, lg;
 	private Led lint;
+	
+	private Inside inside;
 	
 	/* AD channels*/
 	public static final int TEMPSENSORPIN = 2;
@@ -55,45 +57,52 @@ public class CPU extends Thread implements InterruptibleModule {
 	/* DATA */
 	private int irTemp = 20;
 	private int envTemp = 20;
+	private boolean power = false;
 	
-	private boolean[] address = new boolean[5];
+	private int irAddress;
 	private boolean[] irFrame = new boolean[11];
 	private boolean[] frameReceived = new boolean[11];
 	private volatile int irBitCounter = 0;
 	
-	public CPU(JLabel frame, JLabel temp, JLabel out, String add){
+	public CPU(Inside i, JLabel frame, JLabel temp, JLabel out, int add){
 		this.lblRemoteTemp = temp;
 		this.lblRemoteFrame = frame;
 		this.lblOutsideFrame = out;
-		for(int i = 0; i < 5; i++){
-			if(add.charAt(i) == '1')
-				address[i] = true;
-			else 
-				address[i] = false;
-		}
+		this.irAddress = add;
+		this.inside = i;
 	}
 	
 	private int checkFrame(){
 		
+		// Get Address
+		String bits = "";
 		for(int i = 0; i < 5; i++)
-			if(frameReceived[i] != address[i]){
-				System.out.println("Different Address");
-				return -1;
-			}
-		
-		int base = 32, command = 0;
-		for(int i = 5; i < 11; i++){
-			if(frameReceived[i]) command += base;
-			base /= 2;
+			if(frameReceived[i])
+				bits = bits.concat("1");
+			else
+				bits = bits.concat("0");
+				
+		// Check address	
+		int address = Integer.parseInt(bits, 2);
+		if(address != irAddress){
+			System.err.println("Frame with different address!");
+			return -1;
 		}
-		
-		return command;
+				
+		bits = "";
+		for(int i = 5; i < 11; i++){
+			if(frameReceived[i])
+				bits = bits.concat("1");
+			else
+				bits = bits.concat("0");
+		}
+				
+		return Integer.parseInt(bits, 2);
 	}
 	
 	public void run(){
 		
 		intHandler.start();
-		uart.start();
 		
 		float t1;
 		int t2;
@@ -122,27 +131,42 @@ public class CPU extends Thread implements InterruptibleModule {
 				switch(command){
 					case 12:
 						// Power command
+						if(power){
+							// Power off
+							turnOffLeds();
+							power = false;
+							uart.stop = true;
+							inside.PowerOff();
+							uart = null;
+						}else{
+							// Power on
+							power = true;
+							inside.PowerOn();
+							uart = new UART();
+						}
 						break;
 					case 16:
 						// Up command
-						if(irTemp < 44){
+						if(power && irTemp < 44){
 							irTemp++;
 							lblRemoteTemp.setText("Temp: "+irTemp);
 							
-							updateOutsideUnit();
+							updateCompressor();
 						}
 						break;
 					case 17:
 						// Down command
-						if(irTemp > 0){
+						if(power && irTemp > 0){
 							irTemp--;
 							lblRemoteTemp.setText("Temp: "+irTemp);
 							
-							updateOutsideUnit();
+							updateCompressor();
 						}
 						break;
 				}
 			}
+			
+			if(!power) continue;
 			
 			// Temperature Changed
 			if(tempChanged){
@@ -154,21 +178,21 @@ public class CPU extends Thread implements InterruptibleModule {
 				if(t2 == t1){
 					envTemp = t2;
 					setDisplayNumber(envTemp);
-					if(envTemp == irTemp) TurnOffOutsideUnit();
-					else updateOutsideUnit();
+					if(envTemp == irTemp) TurnOffCompressor();
+					else updateCompressor();
 				}else
-					updateOutsideUnit();
+					updateCompressor();
 			}
 		}
 	}
 	
-	private void TurnOffOutsideUnit(){
+	private void TurnOffCompressor(){
 		while(uart.busy);
 		uart.shiftReg = 0;
 		uart.busy = true;
 	}
 	
-	private void updateOutsideUnit(){
+	private void updateCompressor(){
 		
 		int speed = 45 - irTemp;
 		while(uart.busy);
@@ -214,15 +238,16 @@ public class CPU extends Thread implements InterruptibleModule {
 	}
 	
 	private class UART extends Thread{
-	
-		//public volatile char shiftReg;
+
 		public volatile int shiftReg;
 		public volatile boolean busy = false;
+		public volatile boolean stop = false;
 		
 		private final static int BITDELAY = 50;
 		
 		public UART(){
 			setDaemon(true);
+			start();
 		}
 		
 		private void delay(){
@@ -242,7 +267,9 @@ public class CPU extends Thread implements InterruptibleModule {
 			
 			while(true){
 				
-				while(!busy) delay();
+				while(!busy && !stop) delay();
+				
+				if(stop) break;
 				
 				if(shiftReg > 255){
 					busy = false;
@@ -300,8 +327,8 @@ public class CPU extends Thread implements InterruptibleModule {
 				
 				this.cpu.suspend();
 				switch(pin){
+				
 					case IRPIN:
-						//System.out.println("Int "+irPin.readSignal()+" "+irBitCounter);
 						if(irBitCounter == 0){
 							irFrame[irBitCounter++] = irPin.readSignal();
 							irTimer.initiate(IRFRAMEDELAY);
@@ -315,15 +342,18 @@ public class CPU extends Thread implements InterruptibleModule {
 							}
 						}
 						break;
+						
 					case IRTIMERPIN:
 						if(!ignoreIrTimerInterrupt)
 							irBitCounter = 0;
 						else
 							ignoreIrTimerInterrupt = false;
 						break;
+						
 					case TEMPSENSORPIN:
 						tempChanged = true;
 						break;
+						
 					case PIRPIN:
 						// TODO handle
 						if(pirPin.readSignal())
@@ -331,6 +361,7 @@ public class CPU extends Thread implements InterruptibleModule {
 						else
 							System.out.println("Not moving");
 						break;
+						
 				}
 				this.cpu.resume();
 			}
@@ -605,7 +636,7 @@ public class CPU extends Thread implements InterruptibleModule {
 		}
 	}
 	
-	public void turnOff(){
+	public void turnOffLeds(){
 		this.ha.setOff();
 		this.hb.setOff();
 		this.hc.setOff();

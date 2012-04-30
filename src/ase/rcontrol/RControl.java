@@ -67,7 +67,7 @@ public class RControl extends JFrame {
 			}
 		});
 		powerButton.setToolTipText("Click to turn on/off the device.");
-		//powerButton.setIcon(new ImageIcon(RControl.class.getResource("/power.png")));
+		powerButton.setIcon(new ImageIcon(RControl.class.getResource("/power.png")));
 		powerButton.setBounds(131, 48, 55, 55);
 		contentPane.add(powerButton);
 		
@@ -79,11 +79,10 @@ public class RControl extends JFrame {
 		upButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				lblSent.setText("Sent: 111"+irAddress+"010000");
-				//IRmodule.sendCommand("010000");	// Volume+ code
 				bTempUp.pressed();
 			}
 		});
-		//upButton.setIcon(new ImageIcon(RControl.class.getResource("/up.png")));
+		upButton.setIcon(new ImageIcon(RControl.class.getResource("/up.png")));
 		upButton.setBounds(33, 48, 55, 55);
 		contentPane.add(upButton);
 		
@@ -92,10 +91,9 @@ public class RControl extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				lblSent.setText("Sent: 111"+irAddress+"010001");
 				bTempDown.pressed();
-				//IRmodule.sendCommand("010001");	// Volume- code
 			}
 		});
-		//downButton.setIcon(new ImageIcon(RControl.class.getResource("/down.png")));
+		downButton.setIcon(new ImageIcon(RControl.class.getResource("/down.png")));
 		downButton.setBounds(33, 104, 55, 55);
 		contentPane.add(downButton);
 

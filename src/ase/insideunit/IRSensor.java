@@ -25,16 +25,7 @@ public class IRSensor {
 			f = new RandomAccessFile(file, "rwd");
 			System.out.println(file.getAbsolutePath());
 		} catch (FileNotFoundException e) {
-			// Create file
-			try {
-				FileWriter fw = new FileWriter("IR");
-				fw.write('0');
-				fw.close();
-				
-				f = new RandomAccessFile("IR", "r");
-			} catch (IOException e1) {
-				System.err.println(e1);
-			}
+			// Ignore
 		}
 	}
 	
