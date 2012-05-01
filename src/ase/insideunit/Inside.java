@@ -2,17 +2,22 @@ package ase.insideunit;
 
 import java.awt.EventQueue;
 
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.Timer;
+
 import java.awt.Color;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.concurrent.TimeUnit;
+
 import javax.swing.JLabel;
 
 import ase.modules.Led;
 import ase.utils.ADCPin;
 import ase.utils.MAX485;
 import ase.utils.Pin;
-
-import java.util.concurrent.locks.ReentrantLock;
 
 public class Inside{
 	
@@ -47,6 +52,7 @@ public class Inside{
 	private Pin PIR_MCU_Pin = new Pin(cpuModule, CPU.PIRPIN);
 	private Pin RXDPin = new Pin(cpuModule, CPU.RXDPIN);
 	private Pin TXDPin = new Pin(cpuModule, CPU.TXDPIN); 
+	//private Pin INTMODEPin = new Pin(cpuModule, CPU.INTMODEPIN);
 	
 	/* Modules */
 	private IRReceiver ir = new IRReceiver(Ir_MCU_Pin);
@@ -110,7 +116,7 @@ public class Inside{
 	private void initialize() {
 		frmInsideUnit = new JFrame();
 		frmInsideUnit.setTitle("Inside Unit");
-		frmInsideUnit.setBounds(100, 100, 227, 296);
+		frmInsideUnit.setBounds(100, 100, 280, 336);
 		frmInsideUnit.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmInsideUnit.getContentPane().setLayout(null);
 		
@@ -198,6 +204,47 @@ public class Inside{
 		lblOutsideFrame.setBounds(6, 251, 158, 16);
 		frmInsideUnit.getContentPane().add(lblOutsideFrame);
 		
+		final JLabel lblClock = new JLabel("");
+		lblClock.setBounds(180, 260, 100, 16);
+		frmInsideUnit.getContentPane().add(lblClock);
+
+		final JButton buttonPlusMinute = new JButton("+1M");
+		buttonPlusMinute.setBounds(180, 240, 70, 16);
+		frmInsideUnit.getContentPane().add(buttonPlusMinute);
+		buttonPlusMinute.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				cpuModule.addSeconds(60);
+			}
+		});
+		
+		final JButton buttonPlusHour = new JButton("+1H");
+		buttonPlusHour.setBounds(180, 220, 70, 16);
+		frmInsideUnit.getContentPane().add(buttonPlusHour);
+		buttonPlusHour.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				cpuModule.addSeconds(3600);
+			}
+		});
+
+		
+		// refresh clock label
+		Timer timerlblClock = new Timer(1000, new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) 
+			{
+				int totalSeconds = cpuModule.readSeconds();
+				int hours = totalSeconds / 3600;
+				int remainder = totalSeconds % 3600;
+				int minutes = remainder / 60;
+				int seconds = remainder % 60;
+
+				
+				lblClock.setText(String.format("%02d:%02d:%02d", hours, minutes, seconds));
+			}
+		});
+		timerlblClock.start();
 	}
 	
 	public void PowerOn(){

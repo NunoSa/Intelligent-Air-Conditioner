@@ -20,20 +20,24 @@ public class Timer extends Thread {
 		start();
 	}
 	
-	public void reset(){
+	public void reset()
+	{
 		interruptSignal.offer(true);
 	}
 	
-	public void initiate(int ms){
+	public void initiate(int ms)
+	{
 		interruptSignal.poll();
 		this.ms = ms;
 		resume();
 	}
 	
 	@Override
-	public void run() {
+	public void run()
+	{
 		Object signal = null;
-		while(true){
+		while(true)
+		{
 			suspend();
 			try {
 				signal = interruptSignal.poll(ms, TimeUnit.MILLISECONDS);

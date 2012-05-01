@@ -35,7 +35,17 @@ public class CPU extends Thread implements InterruptibleModule {
 	private Led lint;
 	
 	private Inside inside;
+
+	/* Intelligent Mode */
+	/* Timer / Interrupt / Counter */
+	private static final int CLOCKTIMERDELAY = 1000;
+	private static final int CLOCKTIMERPIN = 6;
+	private Timer clockTimer = new Timer(this, CLOCKTIMERPIN);
 	
+		/* Default value is 2pm15 / 14h15 */
+		private int secondsCount = 51300;
+		
+		
 	/* AD channels*/
 	public static final int TEMPSENSORPIN = 2;
 	private ADCPin tempSensorPin;
@@ -48,6 +58,8 @@ public class CPU extends Thread implements InterruptibleModule {
 	private volatile boolean frameReady = false;
 	private volatile boolean ignoreIrTimerInterrupt = false;
 	private volatile boolean tempChanged = false;
+	private volatile boolean movementDetected = false;
+	private volatile boolean intelligentMode  = false;
 	
 	/* DEBUG */
 	private JLabel lblRemoteTemp;
@@ -64,12 +76,15 @@ public class CPU extends Thread implements InterruptibleModule {
 	private boolean[] frameReceived = new boolean[11];
 	private volatile int irBitCounter = 0;
 	
-	public CPU(Inside i, JLabel frame, JLabel temp, JLabel out, int add){
+	public CPU(Inside i, JLabel frame, JLabel temp, JLabel out, int add)
+	{
 		this.lblRemoteTemp = temp;
 		this.lblRemoteFrame = frame;
 		this.lblOutsideFrame = out;
 		this.irAddress = add;
 		this.inside = i;
+		
+		clockTimer.initiate(CLOCKTIMERDELAY);
 	}
 	
 	private int checkFrame(){
@@ -131,7 +146,8 @@ public class CPU extends Thread implements InterruptibleModule {
 				switch(command){
 					case 12:
 						// Power command
-						if(power){
+						if(power)
+						{
 							// Power off
 							turnOffLeds();
 							power = false;
@@ -153,6 +169,11 @@ public class CPU extends Thread implements InterruptibleModule {
 							
 							updateCompressor();
 						}
+
+						// manual override of temperature,
+						// turn off intelligent mode
+						intelligentMode = false;
+						
 						break;
 					case 17:
 						// Down command
@@ -162,14 +183,44 @@ public class CPU extends Thread implements InterruptibleModule {
 							
 							updateCompressor();
 						}
+
+						// manual override of temperature,
+						// turn off intelligent mode
+						intelligentMode = false;
+						
 						break;
 				}
 			}
 			
 			if(!power) continue;
 			
+			// Motion detected
+			if (movementDetected)
+			{
+				System.out.println("Movement Detected");
+				
+				movementDetected = false;
+				
+				// movement is detected, active intelligent mode
+				// by default.
+				// TODO check if the user has manual entered a temperature
+				// in the last X minutes
+				
+				intelligentMode = true;
+			}
+
+			// Intelligent Mode
+			if (intelligentMode)
+			{
+				System.out.println("Intelligent Mode");
+				
+				// compare current temperature with average of array
+				// if is different setup the temperature!
+			}
+
 			// Temperature Changed
-			if(tempChanged){
+			if(tempChanged)
+			{
 				tempChanged = false;
 				
 				// Convert voltage into temperature value
@@ -225,6 +276,16 @@ public class CPU extends Thread implements InterruptibleModule {
 		this.lf = lf;
 		this.lg = lg;
 		this.lint = lint;
+	}
+	
+	public int readSeconds()
+	{
+		return secondsCount;
+	}
+
+	public void addSeconds(int seconds)
+	{
+		secondsCount += seconds;
 	}
 	
 	@Override
@@ -309,7 +370,8 @@ public class CPU extends Thread implements InterruptibleModule {
 		}
 	}
 	
-	private class InterruptHandler extends Thread{
+	private class InterruptHandler extends Thread
+	{
 		
 		private CPU cpu;
 		
@@ -331,13 +393,16 @@ public class CPU extends Thread implements InterruptibleModule {
 				}
 				
 				this.cpu.suspend();
-				switch(pin){
+				switch(pin)
+				{
 				
 					case IRPIN:
-						if(irBitCounter == 0){
+					
+						if(irBitCounter == 0)
+						{
 							irFrame[irBitCounter++] = irPin.readSignal();
 							irTimer.initiate(IRFRAMEDELAY);
-						}else{
+						} else {
 							irFrame[irBitCounter++] = irPin.readSignal();
 							if(irBitCounter >= 11){
 								irBitCounter = 0;
@@ -359,18 +424,33 @@ public class CPU extends Thread implements InterruptibleModule {
 						tempChanged = true;
 						break;
 						
+					case CLOCKTIMERPIN:
+						clockIntRoutine();
+						clockTimer.initiate(CLOCKTIMERDELAY);
+						break;
+						
 					case PIRPIN:
 						// TODO handle
 						if(pirPin.readSignal())
+						{
+							movementDetected = true;
 							System.out.println("Moving");
-						else
+						} else {
+							movementDetected = false;
 							System.out.println("Not moving");
+						}
 						break;
 						
 				}
 				this.cpu.resume();
 			}
 			
+		}
+		
+		protected void clockIntRoutine()
+		{
+			System.out.println("clock pin");
+			secondsCount++;
 		}
 	}
 	
