@@ -45,6 +45,13 @@ public class CPU extends Thread implements InterruptibleModule {
 		/* Default value is 2pm15 / 14h15 */
 		private int secondsCount = 51300;
 		
+		/* Temperature Pattern Array. This keeps the average
+		 * temperature for a determined hour 00h-23h */
+		/* This temperature will be used by the intelligent mode
+		 * to automatically set depending on the hour
+		 */
+		private int[] temperaturePattern = new int[24];
+		
 		
 	/* AD channels*/
 	public static final int TEMPSENSORPIN = 2;
@@ -85,6 +92,21 @@ public class CPU extends Thread implements InterruptibleModule {
 		this.inside = i;
 		
 		clockTimer.initiate(CLOCKTIMERDELAY);
+		
+		initializeTemperaturePattern();
+	}
+	
+	/*
+	 * -1 means there isn't a pattern yet
+	 */
+	private void initializeTemperaturePattern()
+	{
+		temperaturePattern = new int[]{ 
+		//	00h	01h	02h	03h	04h	05h	06h	07h	08h	09h	10h	11h
+			18,	19,	19,	-1,	-1,	-1,	-1,	21,	20,	19,	18,	18,
+		//	12h 13h	14h	15h	16h	17h	18h	19h	20h	21h	22h	23h
+			18,	18,	18,	17,	17,	18,	19,	19,	19,	20,	21,	19
+		};
 	}
 	
 	private int checkFrame(){
@@ -212,10 +234,11 @@ public class CPU extends Thread implements InterruptibleModule {
 			// Intelligent Mode
 			if (intelligentMode)
 			{
-				System.out.println("Intelligent Mode");
+				System.out.println("Intelligent Mode ON");
 				
 				// compare current temperature with average of array
 				// if is different setup the temperature!
+				intelligentModeRoutine();
 			}
 
 			// Temperature Changed
@@ -237,14 +260,20 @@ public class CPU extends Thread implements InterruptibleModule {
 		}
 	}
 	
-	private void TurnOffCompressor(){
+	private void intelligentModeRoutine()
+	{
+		
+	}
+	
+	private void TurnOffCompressor()
+	{
 		while(uart.busy);
 		uart.shiftReg = 0;
 		uart.busy = true;
 	}
 	
-	private void updateCompressor(){
-		
+	private void updateCompressor()
+	{
 		int speed = 45 - irTemp;
 		while(uart.busy);
 		uart.shiftReg = speed;

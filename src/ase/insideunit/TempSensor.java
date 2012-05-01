@@ -71,8 +71,8 @@ public class TempSensor extends Thread{
 			temp = f.readFloat();
 			f.seek(0);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
+			System.out.println("Unable to read Voltage");
 		}
 		
 		float volt = (temp + 50f) / 100f;

@@ -39,6 +39,7 @@ public class Inside{
 	private final JPanel lePanel = new JPanel();
 	private final JPanel lcPanel = new JPanel();
 	private final JPanel intPanel = new JPanel();
+	private final JPanel movPanel = new JPanel();
 	private final JLabel lblRemote = new JLabel("Remote:");
 	private final JLabel lblRemoteFrame = new JLabel("Frame:");
 	private final JLabel lblRemoteTemp = new JLabel("Temp:");
@@ -75,6 +76,8 @@ public class Inside{
 	private Led le = new Led(lePanel);
 	private Led lf = new Led(lfPanel);
 	private Led lg = new Led(lgPanel);
+	
+	private Led lmov = new Led(movPanel);
 	private Led lint = new Led(intPanel);
 
 	/**
@@ -180,9 +183,15 @@ public class Inside{
 		lblTemperature.setBounds(42, 6, 79, 16);
 		frmInsideUnit.getContentPane().add(lblTemperature);
 		
+		
 		intPanel.setBackground(Color.BLACK);
 		intPanel.setBounds(201, 10, 10, 10);
 		frmInsideUnit.getContentPane().add(intPanel);
+
+		movPanel.setBackground(Color.BLACK);
+		movPanel.setBounds(215, 10, 10, 10);
+		frmInsideUnit.getContentPane().add(movPanel);
+
 		
 		JLabel lblInt = new JLabel("Int");
 		lblInt.setBounds(178, 6, 17, 16);
@@ -190,7 +199,7 @@ public class Inside{
 		lblRemote.setBounds(16, 163, 100, 16);
 		
 		frmInsideUnit.getContentPane().add(lblRemote);
-		lblRemoteFrame.setBounds(6, 182, 158, 16);
+		lblRemoteFrame.setBounds(6, 182, 200, 16);
 		
 		frmInsideUnit.getContentPane().add(lblRemoteFrame);
 		lblRemoteTemp.setBounds(6, 200, 100, 16);
