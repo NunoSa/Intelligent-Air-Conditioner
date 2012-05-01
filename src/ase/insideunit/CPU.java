@@ -52,6 +52,13 @@ public class CPU extends Thread implements InterruptibleModule {
 		 */
 		private int[] temperaturePattern = new int[24];
 		
+		/* Temperature Update count. This is used to calculate
+		 * the average temperature for each hour.
+		 * Example: @14h User sets 3 times to 20, 1 time to 16,
+		 *               average is 19.   
+		 */
+		private int[] temperatureUpdateCount = new int[24];
+
 	/* AD channels*/
 	public static final int TEMPSENSORPIN = 2;
 	private ADCPin tempSensorPin;
@@ -185,7 +192,8 @@ public class CPU extends Thread implements InterruptibleModule {
 					case 16:
 						// Up command
 						if(power && irTemp < 44){
-							irTemp++;
+							updateTemperature(++irTemp);							
+							
 							lblRemoteTemp.setText("Temp: "+irTemp);
 							
 							updateCompressor();
@@ -199,7 +207,7 @@ public class CPU extends Thread implements InterruptibleModule {
 					case 17:
 						// Down command
 						if(power && irTemp > 0){
-							irTemp--;
+							updateTemperature(--irTemp);
 							lblRemoteTemp.setText("Temp: "+irTemp);
 							
 							updateCompressor();
@@ -259,9 +267,44 @@ public class CPU extends Thread implements InterruptibleModule {
 		}
 	}
 	
+	private void updateTemperature(int newTemperature)
+	{
+		int currentHour = secondsCount / 3600;
+		int index       = currentHour - 1;
+		
+		irTemp = newTemperature;
+		
+		// TODO With the remote this wil be triggered several times
+		// only do this after the user defines a fixed temperature
+		
+		
+		// Update the pattern array
+		// Averages the pattern temperature with the new temperature
+
+		int averageTemperature =
+			(temperatureUpdateCount[index] * temperaturePattern[index]
+			 + newTemperature )
+			/ temperatureUpdateCount[index] + 1;
+
+
+		temperatureUpdateCount[index]++;
+		temperaturePattern[index] = averageTemperature; 
+	}
+	
 	private void intelligentModeRoutine()
 	{
+		int currentHour = secondsCount / 3600;
+		int assumedTemperature = temperaturePattern[currentHour - 1];
 		
+		// check if the temperature is defined
+		// not "-1"
+		if (assumedTemperature >= 0)
+		{
+			irTemp = assumedTemperature;
+		} else {
+			// do nothing, wait for the next hour
+			// with a predefined temperature
+		}
 	}
 	
 	private void TurnOffCompressor()
