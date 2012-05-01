@@ -32,7 +32,7 @@ public class CPU extends Thread implements InterruptibleModule {
 	
 	private Led ha, hb, hc, hd, he, hf, hg;
 	private Led la, lb, lc, ld, le, lf, lg;
-	private Led lint;
+	private Led lint, lmov;
 	
 	private Inside inside;
 
@@ -50,14 +50,14 @@ public class CPU extends Thread implements InterruptibleModule {
 		/* This temperature will be used by the intelligent mode
 		 * to automatically set depending on the hour
 		 */
-		private int[] temperaturePattern = new int[24];
+		private int[] temperaturePattern;
 		
 		/* Temperature Update count. This is used to calculate
 		 * the average temperature for each hour.
 		 * Example: @14h User sets 3 times to 20, 1 time to 16,
 		 *               average is 19.   
 		 */
-		private int[] temperatureUpdateCount = new int[24];
+		private int[] temperatureUpdateCount;
 
 	/* AD channels*/
 	public static final int TEMPSENSORPIN = 2;
@@ -72,7 +72,14 @@ public class CPU extends Thread implements InterruptibleModule {
 	private volatile boolean ignoreIrTimerInterrupt = false;
 	private volatile boolean tempChanged = false;
 	private volatile boolean movementDetected = false;
-	private volatile boolean intelligentMode  = false;
+	private volatile boolean stopMovementDetected = false;
+	private volatile boolean intelligentMode  = true;
+	private volatile boolean timingShutdown = false;
+	private boolean power = false;
+	private boolean standby = false;
+	
+	private static final int TIMINGSHUTDOWNDELAY = 900; // 15 MINS = 900 secs
+	private int timingStartTime = -1;
 	
 	/* DEBUG */
 	private JLabel lblRemoteTemp;
@@ -82,7 +89,6 @@ public class CPU extends Thread implements InterruptibleModule {
 	/* DATA */
 	private int irTemp = 20;
 	private int envTemp = 20;
-	private boolean power = false;
 	
 	private int irAddress;
 	private boolean[] irFrame = new boolean[11];
@@ -113,6 +119,13 @@ public class CPU extends Thread implements InterruptibleModule {
 			18,	19,	19,	-1,	-1,	-1,	-1,	21,	20,	19,	18,	18,
 		//	12h 13h	14h	15h	16h	17h	18h	19h	20h	21h	22h	23h
 			18,	18,	18,	17,	17,	18,	19,	19,	19,	20,	21,	19
+		};
+		
+		temperatureUpdateCount = new int[]{ 
+		//	00h	01h	02h	03h	04h	05h	06h	07h	08h	09h	10h	11h
+			 0,	 0,	 0,	 0,	 0,	 0,	 0,	 0,	 0,	 0,	 0,	 0,
+		//	12h 13h	14h	15h	16h	17h	18h	19h	20h	21h	22h	23h
+			 0,	 0,	 0,	 0,	 0,	 0,	 0,	 0,	 0,	 0,	 0,	 0
 		};
 	}
 	
@@ -179,12 +192,14 @@ public class CPU extends Thread implements InterruptibleModule {
 							// Power off
 							turnOffLeds();
 							power = false;
+							standby = false;
 							uart.stop = true;
 							inside.PowerOff();
 							uart = null;
 						}else{
 							// Power on
 							power = true;
+							standby = false;
 							inside.PowerOn();
 							uart = new UART();
 						}
@@ -193,8 +208,6 @@ public class CPU extends Thread implements InterruptibleModule {
 						// Up command
 						if(power && irTemp < 44){
 							updateTemperature(++irTemp);							
-							
-							lblRemoteTemp.setText("Temp: "+irTemp);
 							
 							updateCompressor();
 						}
@@ -208,8 +221,7 @@ public class CPU extends Thread implements InterruptibleModule {
 						// Down command
 						if(power && irTemp > 0){
 							updateTemperature(--irTemp);
-							lblRemoteTemp.setText("Temp: "+irTemp);
-							
+		
 							updateCompressor();
 						}
 
@@ -225,28 +237,56 @@ public class CPU extends Thread implements InterruptibleModule {
 			
 			// Motion detected
 			if (movementDetected)
-			{
-				System.out.println("Movement Detected");
-				
+			{	
 				movementDetected = false;
+				lmov.setOn();
 				
 				// movement is detected, active intelligent mode
 				// by default.
 				// TODO check if the user has manual entered a temperature
 				// in the last X minutes
 				
-				intelligentMode = true;
+				if(standby){
+					intelligentMode = true;
+					standby = false;
+				}
+				
+				timingShutdown = false;
+			}
+			
+			if(stopMovementDetected)
+			{
+				stopMovementDetected = false;
+				lmov.setOff();
+				
+				timingStartTime = secondsCount;
+				
+				timingShutdown = true;
+			}
+			
+			if(timingShutdown){
+				
+				int timeElapsed = (timingStartTime > secondsCount ? secondsCount + 86400 : secondsCount) - timingStartTime;
+				
+				if(timeElapsed >= TIMINGSHUTDOWNDELAY){
+					
+					TurnOffCompressor();
+					
+					standby = true;
+					timingShutdown = false;
+				}
 			}
 
 			// Intelligent Mode
 			if (intelligentMode)
 			{
-				System.out.println("Intelligent Mode ON");
+				lint.setOn();
 				
 				// compare current temperature with average of array
 				// if is different setup the temperature!
 				intelligentModeRoutine();
-			}
+			}else
+				lint.setOff();
 
 			// Temperature Changed
 			if(tempChanged)
@@ -270,9 +310,12 @@ public class CPU extends Thread implements InterruptibleModule {
 	private void updateTemperature(int newTemperature)
 	{
 		int currentHour = secondsCount / 3600;
-		int index       = currentHour - 1;
+		//int index       = currentHour - 1;
+		int index       = currentHour;
 		
-		irTemp = newTemperature;
+		//irTemp = newTemperature;
+		
+		lblRemoteTemp.setText("Temp: "+irTemp);
 		
 		// TODO With the remote this wil be triggered several times
 		// only do this after the user defines a fixed temperature
@@ -284,7 +327,7 @@ public class CPU extends Thread implements InterruptibleModule {
 		int averageTemperature =
 			(temperatureUpdateCount[index] * temperaturePattern[index]
 			 + newTemperature )
-			/ temperatureUpdateCount[index] + 1;
+			/ (temperatureUpdateCount[index] + 1);
 
 
 		temperatureUpdateCount[index]++;
@@ -294,13 +337,15 @@ public class CPU extends Thread implements InterruptibleModule {
 	private void intelligentModeRoutine()
 	{
 		int currentHour = secondsCount / 3600;
-		int assumedTemperature = temperaturePattern[currentHour - 1];
+		//int assumedTemperature = temperaturePattern[currentHour - 1];
+		int assumedTemperature = temperaturePattern[currentHour];
 		
 		// check if the temperature is defined
 		// not "-1"
 		if (assumedTemperature >= 0)
 		{
 			irTemp = assumedTemperature;
+			lblRemoteTemp.setText("Temp: "+irTemp);
 		} else {
 			// do nothing, wait for the next hour
 			// with a predefined temperature
@@ -316,6 +361,8 @@ public class CPU extends Thread implements InterruptibleModule {
 	
 	private void updateCompressor()
 	{
+		if(standby) return;
+		
 		int speed = 45 - irTemp;
 		while(uart.busy);
 		uart.shiftReg = speed;
@@ -331,7 +378,7 @@ public class CPU extends Thread implements InterruptibleModule {
 	}
 	
 	public void configureLeds(Led ha, Led hb, Led hc, Led hd, Led he, Led hf, Led hg,
-			Led la, Led lb, Led lc, Led ld, Led le, Led lf, Led lg, Led lint){
+			Led la, Led lb, Led lc, Led ld, Led le, Led lf, Led lg, Led lint, Led lmov){
 		this.ha = ha;
 		this.hb = hb;
 		this.hc = hc;
@@ -347,6 +394,7 @@ public class CPU extends Thread implements InterruptibleModule {
 		this.lf = lf;
 		this.lg = lg;
 		this.lint = lint;
+		this.lmov = lmov;
 	}
 	
 	public int readSeconds()
@@ -507,13 +555,10 @@ public class CPU extends Thread implements InterruptibleModule {
 						
 					case PIRPIN:
 						// TODO handle
-						if(pirPin.readSignal())
-						{
+						if(pirPin.readSignal()) {
 							movementDetected = true;
-							System.out.println("Moving");
 						} else {
-							movementDetected = false;
-							System.out.println("Not moving");
+							stopMovementDetected = true;
 						}
 						break;
 						
@@ -525,7 +570,7 @@ public class CPU extends Thread implements InterruptibleModule {
 		
 		protected void clockIntRoutine()
 		{
-			System.out.println("clock pin");
+			//System.out.println("clock pin");
 			secondsCount++;
 		}
 	}
@@ -812,5 +857,6 @@ public class CPU extends Thread implements InterruptibleModule {
 		this.le.setOff();
 		this.lf.setOff();
 		this.lg.setOff();
+		this.lint.setOff();
 	}
 }

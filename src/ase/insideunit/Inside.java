@@ -104,7 +104,7 @@ public class Inside{
 		
 		/* Start threads */
 		this.cpuModule.configurePins(Ir_MCU_Pin, Temp_MCU_Pin, PIR_MCU_Pin, TXDPin, RXDPin);
-		this.cpuModule.configureLeds(ha, hb, hc, hd, he, hf, hg, la, lb, lc, ld, le, lf, lg, lint);
+		this.cpuModule.configureLeds(ha, hb, hc, hd, he, hf, hg, la, lb, lc, ld, le, lf, lg, lint, lmov);
 		this.cpuModule.start();
 		this.ir.start();
 		
