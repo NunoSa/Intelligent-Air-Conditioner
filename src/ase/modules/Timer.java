@@ -44,12 +44,7 @@ public class Timer extends Thread {
 			} catch (InterruptedException e1) {
 				e1.printStackTrace();
 			}
-			/*try {
-				Thread.sleep(ms, ns);
-			} catch (InterruptedException e) {
-				interrupted();
-				continue;
-			}*/
+
 			if(signal == null) this.module.interruptModule(pin);
 		}
 	}

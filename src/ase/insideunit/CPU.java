@@ -41,7 +41,7 @@ public class CPU extends Thread implements InterruptibleModule {
 	private static final int CLOCKTIMERDELAY = 1000;
 	private static final int CLOCKTIMERPIN = 6;
 	private Timer clockTimer = new Timer(this, CLOCKTIMERPIN);
-	
+
 		/* Default value is 2pm15 / 14h15 */
 		private int secondsCount = 51300;
 		
@@ -51,7 +51,6 @@ public class CPU extends Thread implements InterruptibleModule {
 		 * to automatically set depending on the hour
 		 */
 		private int[] temperaturePattern = new int[24];
-		
 		
 	/* AD channels*/
 	public static final int TEMPSENSORPIN = 2;
@@ -82,6 +81,7 @@ public class CPU extends Thread implements InterruptibleModule {
 	private boolean[] irFrame = new boolean[11];
 	private boolean[] frameReceived = new boolean[11];
 	private volatile int irBitCounter = 0;
+	
 	
 	public CPU(Inside i, JLabel frame, JLabel temp, JLabel out, int add)
 	{
@@ -119,9 +119,8 @@ public class CPU extends Thread implements InterruptibleModule {
 			else
 				bits = bits.concat("0");
 				
-		// Check address	
-		int address = Integer.parseInt(bits, 2);
-		if(address != irAddress){
+		// Check address
+		if(Integer.parseInt(bits, 2) != irAddress){
 			System.err.println("Frame with different address!");
 			return -1;
 		}
@@ -314,7 +313,12 @@ public class CPU extends Thread implements InterruptibleModule {
 
 	public void addSeconds(int seconds)
 	{
-		secondsCount += seconds;
+		// 86 400
+		seconds += secondsCount;
+		if(seconds > 86399)
+			secondsCount = seconds - 86400;
+		else
+			secondsCount = seconds;
 	}
 	
 	@Override
