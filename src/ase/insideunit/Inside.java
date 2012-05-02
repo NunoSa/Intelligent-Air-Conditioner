@@ -21,7 +21,7 @@ import ase.utils.Pin;
 
 public class Inside{
 	
-	private JFrame frmInsideUnit;
+	public JFrame frmInsideUnit;
 	
 	/* Led Panels */
 	private final JPanel haPanel = new JPanel();

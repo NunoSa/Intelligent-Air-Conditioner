@@ -1,0 +1,10 @@
+To execute all 4 processes:
+
+	$ant run
+
+To execute an individual process:
+
+	$ant debug
+	$ant inside
+	$ant outside
+	$ant rcontrol

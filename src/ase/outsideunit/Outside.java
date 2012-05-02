@@ -11,7 +11,7 @@ import ase.utils.Pin;
 
 public class Outside {
 
-	private JFrame frmOutsideUnit;
+	public JFrame frmOutsideUnit;
 	private JLabel lblFrame = new JLabel("Recv: ");
 	private JLabel lblSpeed = new JLabel("Speed: ");
 	

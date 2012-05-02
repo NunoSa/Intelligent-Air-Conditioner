@@ -171,7 +171,7 @@ public class DebugEnvironment {
 		}
 	}
 
-	JFrame frame;	
+	public JFrame frame;	
 	JTextField textRoomTemp;
 	JTextField textAmbTemp;
 
