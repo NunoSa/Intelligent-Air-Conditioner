@@ -104,6 +104,8 @@ public class CPU extends Thread implements InterruptibleModule {
 		this.irAddress = add;
 		this.inside = i;
 		
+		intHandler.start();
+		
 		clockTimer.initiate(CLOCKTIMERDELAY);
 		
 		initializeTemperaturePattern();
@@ -157,8 +159,6 @@ public class CPU extends Thread implements InterruptibleModule {
 	}
 	
 	public void run(){
-		
-		intHandler.start();
 		
 		float t1;
 		int t2;

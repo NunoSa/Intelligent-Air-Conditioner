@@ -8,8 +8,6 @@ import ase.interfaces.InterruptibleModule;
 public class Timer extends Thread {
 
 	private int ms;
-	private int ns;
-	//Interrupt moduleInterr;
 	InterruptibleModule module;
 	private int pin;
 	private ArrayBlockingQueue<Boolean> interruptSignal = new ArrayBlockingQueue<Boolean>(1);
