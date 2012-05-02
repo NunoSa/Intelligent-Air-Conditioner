@@ -40,6 +40,7 @@ public class Inside{
 	private final JPanel lcPanel = new JPanel();
 	private final JPanel intPanel = new JPanel();
 	private final JPanel movPanel = new JPanel();
+	private final JPanel sbPanel = new JPanel();
 	private final JLabel lblRemote = new JLabel("Remote:");
 	private final JLabel lblRemoteFrame = new JLabel("Frame:");
 	private final JLabel lblRemoteTemp = new JLabel("Temp:");
@@ -62,23 +63,24 @@ public class Inside{
 	private MAX485 max485 = new MAX485(TXDPin, RXDPin, MAX485.MASTERMODE);
 	
 	/* Leds */
-	private Led ha = new Led(haPanel);
-	private Led hb = new Led(hbPanel); 
-	private Led hc = new Led(hcPanel);
-	private Led hd = new Led(hdPanel); 
-	private Led he = new Led(hePanel);
-	private Led hf = new Led(hfPanel);
-	private Led hg = new Led(hgPanel);
-	private Led la = new Led(laPanel);
-	private Led lb = new Led(lbPanel);
-	private Led lc = new Led(lcPanel);
-	private Led ld = new Led(ldPanel);
-	private Led le = new Led(lePanel);
-	private Led lf = new Led(lfPanel);
-	private Led lg = new Led(lgPanel);
+	private Led ha = new Led(haPanel, Color.RED);
+	private Led hb = new Led(hbPanel, Color.RED); 
+	private Led hc = new Led(hcPanel, Color.RED);
+	private Led hd = new Led(hdPanel, Color.RED); 
+	private Led he = new Led(hePanel, Color.RED);
+	private Led hf = new Led(hfPanel, Color.RED);
+	private Led hg = new Led(hgPanel, Color.RED);
+	private Led la = new Led(laPanel, Color.RED);
+	private Led lb = new Led(lbPanel, Color.RED);
+	private Led lc = new Led(lcPanel, Color.RED);
+	private Led ld = new Led(ldPanel, Color.RED);
+	private Led le = new Led(lePanel, Color.RED);
+	private Led lf = new Led(lfPanel, Color.RED);
+	private Led lg = new Led(lgPanel, Color.RED);
 	
-	private Led lmov = new Led(movPanel);
-	private Led lint = new Led(intPanel);
+	private Led lmov = new Led(movPanel, Color.RED);
+	private Led lint = new Led(intPanel, Color.RED);
+	private Led lsb = new Led(sbPanel, Color.ORANGE);
 
 	/**
 	 * Launch the application.
@@ -104,7 +106,7 @@ public class Inside{
 		
 		/* Start threads */
 		this.cpuModule.configurePins(Ir_MCU_Pin, Temp_MCU_Pin, PIR_MCU_Pin, TXDPin, RXDPin);
-		this.cpuModule.configureLeds(ha, hb, hc, hd, he, hf, hg, la, lb, lc, ld, le, lf, lg, lint, lmov);
+		this.cpuModule.configureLeds(ha, hb, hc, hd, he, hf, hg, la, lb, lc, ld, le, lf, lg, lint, lmov, lsb);
 		this.cpuModule.start();
 		this.ir.start();
 		
@@ -185,11 +187,11 @@ public class Inside{
 		
 		
 		intPanel.setBackground(Color.BLACK);
-		intPanel.setBounds(201, 10, 10, 10);
+		intPanel.setBounds(211, 10, 10, 10);
 		frmInsideUnit.getContentPane().add(intPanel);
 
 		movPanel.setBackground(Color.BLACK);
-		movPanel.setBounds(215, 10, 10, 10);
+		movPanel.setBounds(211, 32, 10, 10);
 		frmInsideUnit.getContentPane().add(movPanel);
 
 		
@@ -230,6 +232,19 @@ public class Inside{
 		final JButton buttonPlusHour = new JButton("+1H");
 		buttonPlusHour.setBounds(180, 220, 70, 16);
 		frmInsideUnit.getContentPane().add(buttonPlusHour);
+		
+		JLabel lblMov = new JLabel("Mov");
+		lblMov.setBounds(178, 28, 33, 16);
+		frmInsideUnit.getContentPane().add(lblMov);
+		
+		JLabel lblNewLabel = new JLabel("Standby");
+		lblNewLabel.setBounds(178, 54, 61, 16);
+		frmInsideUnit.getContentPane().add(lblNewLabel);
+
+		sbPanel.setBackground(Color.BLACK);
+		sbPanel.setBounds(199, 71, 10, 10);
+		frmInsideUnit.getContentPane().add(sbPanel);
+		
 		buttonPlusHour.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {

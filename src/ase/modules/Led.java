@@ -8,18 +8,21 @@ public class Led {
 	
 	private boolean on = false;
 	private JPanel panel;
+	private Color color;
 	
 	public synchronized void setOn(){ 
 		this.on = true; 
-		panel.setBackground(Color.RED);
+		panel.setBackground(color);
 	}
 	public synchronized void setOff(){ 
 		this.on = false;
 		panel.setBackground(Color.BLACK);
 	}
 	
-	public Led(JPanel panel){
+	public Led(JPanel panel, Color c){
 		this.panel = panel;
+		this.color = c;
+		
 	}
 	
 	//DEBUG

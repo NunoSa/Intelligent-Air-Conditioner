@@ -32,7 +32,7 @@ public class CPU extends Thread implements InterruptibleModule {
 	
 	private Led ha, hb, hc, hd, he, hf, hg;
 	private Led la, lb, lc, ld, le, lf, lg;
-	private Led lint, lmov;
+	private Led lint, lmov, lsb;
 	
 	private Inside inside;
 
@@ -74,7 +74,7 @@ public class CPU extends Thread implements InterruptibleModule {
 	private volatile boolean movementDetected = false;
 	private volatile boolean stopMovementDetected = false;
 	private volatile boolean intelligentMode  = true;
-	private volatile boolean timingShutdown = false;
+	private volatile boolean timingStandby = false;
 	private boolean power = false;
 	private boolean standby = false;
 	
@@ -192,32 +192,41 @@ public class CPU extends Thread implements InterruptibleModule {
 							// Power off
 							turnOffLeds();
 							power = false;
-							standby = false;
+							StandbyOff();
 							uart.stop = true;
 							inside.PowerOff();
 							uart = null;
 						}else{
 							// Power on
 							power = true;
-							standby = false;
+							StandbyOff();
+							StartStandbyTiming();
 							inside.PowerOn();
 							uart = new UART();
 						}
 						break;
 					case 16:
+						
+						// manual override of temperature,
+						// turn off intelligent mode
+						intelligentMode = false;
+						StandbyOff();
+						
 						// Up command
 						if(power && irTemp < 44){
 							updateTemperature(++irTemp);							
 							
 							updateCompressor();
 						}
-
-						// manual override of temperature,
-						// turn off intelligent mode
-						intelligentMode = false;
 						
 						break;
 					case 17:
+						
+						// manual override of temperature,
+						// turn off intelligent mode
+						intelligentMode = false;
+						StandbyOff();
+						
 						// Down command
 						if(power && irTemp > 0){
 							updateTemperature(--irTemp);
@@ -225,10 +234,6 @@ public class CPU extends Thread implements InterruptibleModule {
 							updateCompressor();
 						}
 
-						// manual override of temperature,
-						// turn off intelligent mode
-						intelligentMode = false;
-						
 						break;
 				}
 			}
@@ -248,10 +253,10 @@ public class CPU extends Thread implements InterruptibleModule {
 				
 				if(standby){
 					intelligentMode = true;
-					standby = false;
+					StandbyOff();
 				}
 				
-				timingShutdown = false;
+				timingStandby = false;
 			}
 			
 			if(stopMovementDetected)
@@ -259,12 +264,10 @@ public class CPU extends Thread implements InterruptibleModule {
 				stopMovementDetected = false;
 				lmov.setOff();
 				
-				timingStartTime = secondsCount;
-				
-				timingShutdown = true;
+				StartStandbyTiming();
 			}
 			
-			if(timingShutdown){
+			if(timingStandby){
 				
 				int timeElapsed = (timingStartTime > secondsCount ? secondsCount + 86400 : secondsCount) - timingStartTime;
 				
@@ -272,8 +275,8 @@ public class CPU extends Thread implements InterruptibleModule {
 					
 					TurnOffCompressor();
 					
-					standby = true;
-					timingShutdown = false;
+					StandbyOn();
+					timingStandby = false;
 				}
 			}
 
@@ -305,6 +308,21 @@ public class CPU extends Thread implements InterruptibleModule {
 					updateCompressor();
 			}
 		}
+	}
+	
+	private void StartStandbyTiming(){
+		timingStartTime = secondsCount;
+		timingStandby = true;
+	}
+	
+	private void StandbyOff(){
+		standby = false;
+		lsb.setOff();
+	}
+	
+	private void StandbyOn(){
+		standby = true;
+		lsb.setOn();
 	}
 	
 	private void updateTemperature(int newTemperature)
@@ -378,7 +396,7 @@ public class CPU extends Thread implements InterruptibleModule {
 	}
 	
 	public void configureLeds(Led ha, Led hb, Led hc, Led hd, Led he, Led hf, Led hg,
-			Led la, Led lb, Led lc, Led ld, Led le, Led lf, Led lg, Led lint, Led lmov){
+			Led la, Led lb, Led lc, Led ld, Led le, Led lf, Led lg, Led lint, Led lmov, Led lsb){
 		this.ha = ha;
 		this.hb = hb;
 		this.hc = hc;
@@ -395,6 +413,7 @@ public class CPU extends Thread implements InterruptibleModule {
 		this.lg = lg;
 		this.lint = lint;
 		this.lmov = lmov;
+		this.lsb = lsb;
 	}
 	
 	public int readSeconds()
